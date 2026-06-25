@@ -1,0 +1,8 @@
+# macOS metadata
+._*
+.DS_Store
+._.DS_Store
+
+# ACME challenge / server artifacts
+.well-known/
+cgi-bin/
