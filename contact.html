@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Bottor Learning Foundation</title>
+  <meta name="description" content="Get in touch with Bottor Learning Foundation. We welcome inquiries from schools, educators, donors, and community partners interested in STEM and literacy education.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="header-logo" aria-label="Bottor Learning Foundation Home">
+        <img src="images/logo.png" alt="Bottor Learning Foundation Logo">
+        <span>Bottor Learning<br>Foundation</span>
+      </a>
+      <button class="menu-toggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" role="navigation" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="programs.html">Programs</a>
+        <a href="https://givebutter.com/fund-a-new-way-to-teach-kids-reading-jpgwdh" target="_blank" rel="noopener noreferrer">Donate</a>
+        <a href="contact.html">Contact</a>
+        <span class="nav-donate">
+          <a href="https://givebutter.com/fund-a-new-way-to-teach-kids-reading-jpgwdh" class="btn btn-donate donate-link" target="_blank" rel="noopener noreferrer">Donate</a>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== PAGE HEADER ========== -->
+  <section class="page-header">
+    <div class="container">
+      <h1>Contact Us</h1>
+      <p>We'd love to hear from you — whether you're a school, educator, donor, or literacy supporter.</p>
+    </div>
+  </section>
+
+  <!-- ========== CONTACT CONTENT ========== -->
+  <section class="section">
+    <div class="container">
+      <div class="contact-grid">
+
+        <!-- Contact Form -->
+        <div>
+          <h2 style="margin-bottom:8px;">Send Us a Message</h2>
+          <p style="color:var(--gray-600);margin-bottom:28px;">
+            Have a question, idea, or partnership inquiry? Fill out the form below and
+            we will get back to you as soon as we can.
+          </p>
+
+          <form id="contact-form" class="contact-form" action="#" method="POST">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" placeholder="Full name" required>
+
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+
+            <label for="subject">Subject</label>
+            <select id="subject" name="subject">
+              <option value="general">General Inquiry</option>
+              <option value="partnership">School or Community Partnership</option>
+              <option value="donation">Donation Question</option>
+              <option value="volunteer">Volunteering</option>
+              <option value="media">Media or Press</option>
+              <option value="other">Other</option>
+            </select>
+
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="How can we help?" required></textarea>
+
+            <button type="submit" class="btn btn-primary">Send Message</button>
+
+            <!-- Success message (shown by JS) -->
+            <div id="form-success" style="display:none;margin-top:20px;padding:16px;background:var(--green-light);border-radius:var(--radius);color:var(--green-dark);font-weight:500;">
+              Thank you for reaching out! We will get back to you soon.
+            </div>
+          </form>
+        </div>
+
+        <!-- Contact Info Sidebar -->
+        <div>
+          <div class="contact-info-block">
+            <h3>Email</h3>
+            <!-- ✅ CONTACT EMAIL — Update this email address -->
+            <p><a href="mailto:info@bottorlearningfoundation.org">info@bottorlearningfoundation.org</a></p>
+          </div>
+
+          <div class="contact-info-block">
+            <h3>Follow Us</h3>
+            <p>
+              <!-- ✅ SOCIAL LINKS — Update these hrefs with your real social media URLs -->
+              <a href="#" target="_blank" rel="noopener">Facebook</a><br>
+              <a href="#" target="_blank" rel="noopener">Instagram</a><br>
+              <a href="#" target="_blank" rel="noopener">Twitter / X</a><br>
+              <a href="#" target="_blank" rel="noopener">LinkedIn</a>
+            </p>
+          </div>
+
+          <div class="contact-info-block">
+            <h3>For Schools &amp; Partners</h3>
+            <p>
+              If you represent a school, library, or community organization and would like
+              to explore a partnership with Bottor Learning Foundation, we would love to
+              hear from you. Please use the contact form or email us directly.
+            </p>
+          </div>
+
+          <div class="contact-info-block">
+            <h3>For Donors</h3>
+            <p>
+              Have a question about donating or want to learn more about how your
+              support makes a difference? Visit our <a href="https://givebutter.com/fund-a-new-way-to-teach-kids-reading-jpgwdh" target="_blank" rel="noopener noreferrer">Donate page</a>
+              or send us a message.
+            </p>
+          </div>
+
+          <div class="contact-info-block">
+            <h3>Volunteer &amp; Get Involved</h3>
+            <p>
+              Interested in volunteering your time or skills to support STEM and literacy education?
+              We welcome community members who want to help make learning accessible for every student.
+              Reach out and let us know how you'd like to be involved.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="cta-banner">
+    <div class="container">
+      <h2>Support Our Mission</h2>
+      <p>
+        Your generosity helps put books in children's hands and brings literacy
+        resources to the communities that need them most.
+      </p>
+      <a href="https://givebutter.com/fund-a-new-way-to-teach-kids-reading-jpgwdh" class="btn btn-donate btn-lg donate-link" target="_blank" rel="noopener noreferrer">Donate Now</a>
+      <p style="color:rgba(255,255,255,0.85);font-size:0.9rem;margin-top:12px;">Your donation is tax-deductible.</p>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="images/logo.png" alt="Bottor Learning Foundation Logo">
+          <p>
+            Bottor Learning Foundation empowers students through hands-on STEM and literacy
+            education that inspires curiosity, critical thinking, and a lifelong love of learning.
+          </p>
+        </div>
+        <div>
+          <h4>Navigate</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="programs.html">Programs</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Support</h4>
+          <ul>
+            <li><a href="https://givebutter.com/fund-a-new-way-to-teach-kids-reading-jpgwdh" target="_blank" rel="noopener noreferrer">Donate</a></li>
+            <li><a href="contact.html">Partner With Us</a></li>
+            <li><a href="contact.html">Get Involved</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Connect</h4>
+          <ul>
+            <li><a href="#" target="_blank" rel="noopener">Facebook</a></li>
+            <li><a href="#" target="_blank" rel="noopener">Instagram</a></li>
+            <li><a href="#" target="_blank" rel="noopener">Twitter / X</a></li>
+            <li><a href="#" target="_blank" rel="noopener">LinkedIn</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; Bottor Learning Foundation | 501(c)(3) nonprofit organization | EIN: 41-3321544</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
