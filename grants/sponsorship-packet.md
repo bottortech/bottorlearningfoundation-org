@@ -1,6 +1,8 @@
 # Bottor Learning Foundation — Corporate Sponsorship Packet
 ### Sponsor the Bottor Inventor Workshop
 
+![Bottor Inventor Workshop overview: From Problem to Prototype to Pitch](../images/Bottor-Inventory-Workshop.png)
+
 > *"The Bottor Inventor Workshop is a five-day invention-based learning experience where students identify real-world problems, build prototypes, strengthen literacy, and present innovative solutions."*
 
 This is the reusable base packet for approaching corporate and business sponsors. It's written to be copied and adapted per company — swap in the sponsor's name, adjust tier language to match the conversation, and trim to one page before sending. See the checklist at the bottom before this goes out the door for the first time.
