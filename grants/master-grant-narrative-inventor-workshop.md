@@ -9,6 +9,14 @@ Dollar figures below reflect a $10,000 baseline ask (sized for a typical small/f
 
 ---
 
+## Organization Mailing Address
+
+Bottor Learning Foundation
+11411 W. Park Place, Suite 202
+Milwaukee, WI 53224
+
+*(Use this address for all correspondence, applications, and agreements. Event venues — e.g., Kuumba Juice + Coffee for the Demo Dat Discography event — are never the organization's mailing address.)*
+
 ## Project/Program Name
 
 **Bottor Inventor Workshop**
@@ -31,7 +39,7 @@ Our flagship program, the **Bottor Inventor Workshop**, is a five-day, hands-on 
 
 This request supports delivering the Inventor Workshop through Bottor Learning Foundation's modular delivery model: foundation-hosted cohorts during the summer or school breaks, in-school residencies with partner schools, library and community-center workshops, and after-school or weekend formats. The curriculum stays identical across every setting; only the delivery format adapts to the host. Funds support prototype-building materials, printed Inventor's Journals for every student, training for partner-site educators, and the culminating Expo where students showcase their prototype, journal, sketch, and pitch to an audience of parents, teachers, and community members.
 
-Programming centers on students in grades 3–5 (ages 8–11), an age where students are ready to take on real research, design, and communication challenges while still building foundational literacy skills. We also support the teachers, families, schools, libraries, and community partners who help bring the workshop to students. Bottor Learning Foundation is headquartered in Wisconsin and is building a long-term commitment to the Inventor Workshop statewide, with a goal of expanding to additional communities nationwide.
+Programming centers on students in grades 3–5 (ages 8–11), an age where students are ready to take on real research, design, and communication challenges while still building foundational literacy skills. We also support the teachers, families, schools, libraries, and community partners who help bring the workshop to students. Bottor Learning Foundation is headquartered in Milwaukee, Wisconsin, and is building a long-term commitment to the Inventor Workshop statewide, with a goal of expanding to additional communities nationwide. Workshops themselves have no fixed location — they are hosted in partnership with schools, libraries, and community organizations throughout Wisconsin.
 
 The intended impact is twofold: immediate — students leave the workshop with a completed prototype, Inventor's Journal, and pitch, along with a Certificate of Completion and measurably greater confidence in reading, problem-solving, creativity, and public speaking — and long-term, building the kind of early literacy and critical-thinking foundation that research links to sustained academic success (reading proficiency by third grade is one of the strongest predictors of long-term achievement).
 
@@ -103,5 +111,5 @@ Before adapting this narrative for a new funder, check:
 3. **Exclusions** — check for standard funder exclusions before budgeting: general operating support/overhead, capital campaigns or building projects, fundraising drives or event sponsorships, ongoing (vs. one-time) technology requests. Reframe budget line notes to make clear which category each cost falls into.
 4. **Award size** — scale the budget model up or down to the funder's typical grant range or stated cap; keep category ratios consistent where possible.
 5. **Named partners** — only name specific partner organizations (e.g., Vision Minds Entertainment, Kuumba Juice & Coffee for the Demo Dat Discography event) if that specific funder's project actually involves them. This master narrative intentionally excludes them since they belong to Bottor's supporting community-literacy programming, not the Inventor Workshop itself.
-6. **Org address / mailing info** — still not on file anywhere in this document; get Bottor's actual HQ mailing address before any application that requires one.
+6. **Org address / mailing info** — resolved: 11411 W. Park Place, Suite 202, Milwaukee, WI 53224 (see Organization Mailing Address above). Use this for the application's org-info fields; don't substitute an event venue address.
 7. **Participant/impact numbers** — the "4–6 cohorts / 100–150 students" estimate is a placeholder tied to this specific $10,000/$12,500 budget model, not a confirmed schedule. Replace it with the actual planned cohort count and size for the funder's grant period before submitting, and recalculate if the award size or program scope changes.

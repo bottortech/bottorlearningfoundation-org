@@ -38,12 +38,17 @@ Bottor Learning Foundation is a Wisconsin-based 501(c)(3) nonprofit (EIN 41-3321
 
 To discuss a sponsorship, contact us through the website's contact form (select "Donation Question" or "General Inquiry") or email **info@bottorlearningfoundation.org**.
 
+**Mailing address** (for checks or mailed materials):
+Bottor Learning Foundation
+11411 W. Park Place, Suite 202
+Milwaukee, WI 53224
+
 ---
 
 ## Before Sending This Packet — Checklist
 
 1. **No sponsor-recognition page exists on the website yet.** Before promising "logo on our website" or "listed as a sponsor," either build that page or adjust the benefit to something currently deliverable (event signage, social media, an Expo mention).
 2. **Tax-deductibility of sponsorships with benefits.** Unlike a straight donation, a sponsorship that includes tangible benefits (logo placement, event recognition) may only be tax-deductible for the portion exceeding fair market value of those benefits. Confirm the correct language with Sharlane Gunn (Treasurer) before quoting deductibility to a sponsor — don't reuse the site's blanket "your donation is tax-deductible" line here without checking.
-3. **HQ mailing address** — still not on file anywhere in Bottor's materials; get this before sending anything with a "mail a check to" ask.
+3. **HQ mailing address** — resolved: 11411 W. Park Place, Suite 202, Milwaukee, WI 53224 (see Contact / Next Steps above). Use this for any "mail a check to" ask; never substitute an event venue address.
 4. **Real photos** — this packet reads better with an actual Inventors Expo photo once one exists; swap in as soon as the first cohort runs.
 5. **Confirm current cohort schedule** before naming a specific Expo date to a prospective sponsor.

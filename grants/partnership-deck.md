@@ -40,12 +40,19 @@ Every student leaves with a completed Inventor's Journal, prototype, invention s
 
 Reach out through the website's contact form (select "Bring the Workshop to My School or Library") or email **info@bottorlearningfoundation.org** to check availability and schedule a workshop.
 
+**Mailing address** (for agreements or mailed materials):
+Bottor Learning Foundation
+11411 W. Park Place, Suite 202
+Milwaukee, WI 53224
+
+*(This is the organization's administrative address. Workshop sessions themselves have no fixed location — they're hosted at your school, library, or community space.)*
+
 ---
 
 ## Before Using This Deck — Checklist
 
 1. **Confirm facilitator training capacity** before promising a start date for the partner-led model — check Bottor's current training materials and timeline first.
 2. **Confirm cohort scheduling availability** before naming a specific semester or date to a prospective partner.
-3. **HQ mailing address** — still not on file anywhere in Bottor's materials; needed before any formal partnership agreement or MOU.
+3. **HQ mailing address** — resolved: 11411 W. Park Place, Suite 202, Milwaukee, WI 53224 (see Next Steps above). Use this in any formal partnership agreement or MOU; never substitute the school/library's own address for Bottor's.
 4. **No signed partner MOU/agreement template exists yet** — draft one covering space, liability, and scheduling expectations before finalizing the first formal partnership.
 5. **Real photos** — swap in an actual Inventors Expo or workshop photo as soon as one exists; this deck currently has none to include.
