@@ -1,7 +1,7 @@
 # Bottor Learning Foundation — Partnership Deck
 ### Bring the Bottor Inventor Workshop to Your School, Library, or Community Center
 
-![Bottor Inventor Workshop overview: From Problem to Prototype to Pitch](../images/Bottor-Inventory-Workshop.png)
+![Bottor Inventor Workshop overview: From Problem to Prototype to Pitch](../images/Bottor-Inventor-Workshop.png)
 
 > *"The Bottor Inventor Workshop is a five-day invention-based learning experience where students identify real-world problems, build prototypes, strengthen literacy, and present innovative solutions."*
 
