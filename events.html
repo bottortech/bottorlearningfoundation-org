@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events &amp; Calendar — Bottor Learning Foundation</title>
+  <meta name="description" content="See upcoming Bottor Learning Foundation events, including free WiggleWoo's Word Quest community literacy experiences at Milwaukee Public Library branches.">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="header-logo" aria-label="Bottor Learning Foundation Home">
+        <img src="images/logo.png" alt="Bottor Learning Foundation Logo">
+        <span>Bottor Learning<br>Foundation</span>
+      </a>
+      <button class="menu-toggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" role="navigation" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="programs.html">Inventor Workshop</a>
+        <a href="events.html">Events</a>
+        <a href="https://givebutter.com/fund-a-new-way-to-teach-kids-reading-jpgwdh" target="_blank" rel="noopener noreferrer">Donate</a>
+        <a href="contact.html">Contact</a>
+        <span class="nav-donate">
+          <a href="https://givebutter.com/fund-a-new-way-to-teach-kids-reading-jpgwdh" class="btn btn-donate donate-link" target="_blank" rel="noopener noreferrer">Donate</a>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== PAGE HEADER ========== -->
+  <section class="page-header">
+    <div class="container">
+      <h1>Events &amp; Calendar</h1>
+      <p>Free, family-friendly Bottor Learning Foundation events happening in your community.</p>
+    </div>
+  </section>
+
+  <!-- ========== WIGGLEWOO TOUR BANNER ========== -->
+  <section class="section-sm" style="padding-bottom:0;">
+    <div class="container text-center">
+      <img
+        src="images/WiggleWoo_WordQuest_CommunityLibraryTour_Web.png"
+        alt="WiggleWoo's Word Quest Community Library Tour — three free family literacy events at Milwaukee Public Library locations, September through November 2026"
+        style="max-width:340px;width:100%;height:auto;border-radius:var(--radius-lg);box-shadow:var(--shadow-md);margin:0 auto;"
+      >
+    </div>
+  </section>
+
+  <!-- ========== EVENTS ========== -->
+  <section class="section">
+    <div class="container">
+      <div class="events-layout">
+
+        <!-- Calendar -->
+        <div class="events-sidebar">
+          <div class="calendar-widget" id="events-calendar" aria-label="Event calendar"></div>
+          <p style="font-size:0.88rem;color:var(--gray-600);margin-top:16px;">
+            Dates with a dot have an event — select one to see full details.
+          </p>
+        </div>
+
+        <!-- Event Lists -->
+        <div>
+          <div class="section-header" style="text-align:left;margin:0 0 24px;max-width:none;">
+            <h2 style="margin-bottom:8px;">Upcoming Events</h2>
+            <p style="font-size:1rem;">All events are free and open to the community.</p>
+          </div>
+          <div class="event-card-grid" id="events-upcoming-grid"></div>
+
+          <div id="events-past-section" hidden style="margin-top:56px;">
+            <div class="section-header" style="text-align:left;margin:0 0 24px;max-width:none;">
+              <h2 style="margin-bottom:8px;">Past Events</h2>
+              <p style="font-size:1rem;">A look back at recent Bottor Learning Foundation events.</p>
+            </div>
+            <div class="event-card-grid" id="events-past-grid"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="cta-banner">
+    <div class="container">
+      <h2>Bring an Event to Your Library or Community</h2>
+      <p>
+        Interested in hosting a WiggleWoo's Word Quest experience or another Bottor Learning Foundation
+        program at your school, library, or community organization? We'd love to hear from you.
+      </p>
+      <a href="contact.html" class="btn btn-donate btn-lg">Get In Touch</a>
+    </div>
+  </section>
+
+  <!-- ========== EVENT DETAIL MODAL ========== -->
+  <div class="event-modal-overlay" id="event-modal-overlay" hidden>
+    <div class="event-modal" role="dialog" aria-modal="true" aria-labelledby="event-modal-title">
+      <button type="button" class="event-modal-close" aria-label="Close event details">&times;</button>
+      <div id="event-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="images/logo.png" alt="Bottor Learning Foundation Logo">
+          <p>
+            Bottor Learning Foundation advances literacy, innovation, and STEM through invention-based
+            learning that empowers young inventors, creative problem-solvers, and future entrepreneurs.
+          </p>
+          <p style="margin-top:8px;">11411 W. Park Place, Suite 202<br>Milwaukee, WI 53224</p>
+        </div>
+        <div>
+          <h4>Navigate</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="programs.html">Inventor Workshop</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Support</h4>
+          <ul>
+            <li><a href="https://givebutter.com/fund-a-new-way-to-teach-kids-reading-jpgwdh" target="_blank" rel="noopener noreferrer">Donate</a></li>
+            <!-- ✅ SHOP LINK — Replace # with the live Bonfire campaign URL -->
+            <li><a href="#" target="_blank" rel="noopener noreferrer">Shop</a></li>
+            <li><a href="contact.html">Partner With Us</a></li>
+            <li><a href="contact.html">Get Involved</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Connect</h4>
+          <ul>
+            <!-- ✅ SOCIAL LINKS — Update these hrefs with your real social media URLs -->
+            <li><a href="#" target="_blank" rel="noopener">Facebook</a></li>
+            <li><a href="#" target="_blank" rel="noopener">Instagram</a></li>
+            <li><a href="#" target="_blank" rel="noopener">Twitter / X</a></li>
+            <li><a href="#" target="_blank" rel="noopener">LinkedIn</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; Bottor Learning Foundation | 501(c)(3) nonprofit organization | EIN: 41-3321544</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="events-data.js"></script>
+  <script src="events.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

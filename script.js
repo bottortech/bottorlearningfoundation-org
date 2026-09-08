@@ -68,11 +68,14 @@ function setupContactForm() {
 
 // Set active navigation link based on current page
 function setActiveNav() {
-  var path = window.location.pathname.split('/').pop() || 'index.html';
+  // Vercel serves clean URLs (e.g. "/about" instead of "/about.html"),
+  // so normalize both sides by stripping the .html extension before comparing.
+  var segments = window.location.pathname.split('/').filter(Boolean);
+  var current = (segments.length ? segments[segments.length - 1] : 'index.html').replace(/\.html$/i, '');
   var links = document.querySelectorAll('.nav-links a:not(.nav-donate a)');
   links.forEach(function(link) {
     var href = link.getAttribute('href');
-    if (href === path || (path === '' && href === 'index.html')) {
+    if (href && href.replace(/\.html$/i, '') === current) {
       link.classList.add('active');
     }
   });
