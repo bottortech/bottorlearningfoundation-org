@@ -39,7 +39,7 @@ const BLF_EVENTS = [
     address: "Milwaukee, WI",
     cost: "Free",
     audience: "Open to the Community",
-    status: "pending",
+    status: "confirmed",
     description: "Join Bottor Learning Foundation for a free, interactive literacy experience featuring WiggleWoo's Word Quest. Children and families can explore phonics, reading, and learning through interactive gameplay while learning more about the Foundation's literacy initiatives."
   },
   {
@@ -55,7 +55,7 @@ const BLF_EVENTS = [
     address: "Milwaukee, WI",
     cost: "Free",
     audience: "Open to the Community",
-    status: "pending",
+    status: "confirmed",
     description: "Join Bottor Learning Foundation for a free, interactive literacy experience featuring WiggleWoo's Word Quest. Children and families can explore phonics, reading, and learning through interactive gameplay while learning more about the Foundation's literacy initiatives."
   },
   {
@@ -71,7 +71,7 @@ const BLF_EVENTS = [
     address: "Milwaukee, WI",
     cost: "Free",
     audience: "Open to the Community",
-    status: "pending",
+    status: "confirmed",
     description: "Join Bottor Learning Foundation for a free, interactive literacy experience featuring WiggleWoo's Word Quest. Children and families can explore phonics, reading, and learning through interactive gameplay while learning more about the Foundation's literacy initiatives."
   },
   {
