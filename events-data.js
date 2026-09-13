@@ -88,5 +88,21 @@ const BLF_EVENTS = [
     audience: "Open to the Community",
     status: "confirmed",
     description: "A free community hangout hosted by Vision Minds Ent and Bottor Learning Foundation, in partnership with Kuumba Juice + Coffee — play your unreleased music, tell stories and read, drop off a book for the book drive, relax with cafe food and drink, and play WiggleWoo's Word Quest, a new children's word game."
+  },
+  {
+    id: "candyland-dominican-center-2026-10-03",
+    title: "Candyland Community Event",
+    category: "Community Event",
+    image: "images/candyland-event.jpg",
+    date: "2026-10-03",
+    startTime: "14:00",
+    endTime: "18:00",
+    venue: "Dominican Center",
+    room: "",
+    address: "2470 W. Locust Street, Milwaukee, WI 53206",
+    cost: "Free",
+    audience: "Open to the Community",
+    status: "confirmed",
+    description: "Bottor Learning Foundation is proud to participate in NGL & Dominican Center's Candyland, a free community event bringing families together for hands-on learning, creativity, literacy, STEM activities, and youth engagement. As part of the event, Bottor Learning Foundation will provide children with a hands-on opportunity to experience WiggleWoo's Word Quest, an interactive early-literacy and phonics game designed for children ages 4–8. Youth will be able to play the game, practice foundational literacy skills, and provide valuable feedback that will help guide the continued development of the WiggleWoo learning experience. Foundation founder and children's author Byron Brown Jr. will also showcase his Professor WiggleWoo's Whirly-Whiz Thingamajig books, connecting interactive learning and technology with storytelling and children's literacy. Through community partnerships like this, Bottor Learning Foundation continues its mission of advancing literacy, innovation, and STEM through engaging, hands-on learning experiences for young people."
   }
 ];
