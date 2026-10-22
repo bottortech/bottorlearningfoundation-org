@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Agreement — Bottor Learning Foundation</title>
+  <meta name="description" content="The Bottor Learning Foundation Volunteer Agreement: conduct, confidentiality, attendance, youth safety, supervision, accurate reporting, and non-discrimination.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="agreement-page">
+  <main class="container agreement-document">
+    <header class="agreement-letterhead">
+      <img src="images/logo.png" alt="Bottor Learning Foundation Logo">
+      <div>
+        <strong>Bottor Learning Foundation</strong><br>
+        11411 W. Park Place, Suite 202, Milwaukee, WI 53224<br>
+        info@bottorlearningfoundation.org · EIN 41-3321544
+      </div>
+    </header>
+
+    <div class="agreement-toolbar no-print">
+      <a href="volunteer.html">← Back to the volunteer page</a>
+      <button type="button" class="btn btn-primary" id="print-btn">Print or Save as PDF</button>
+    </div>
+
+    <h1>Volunteer Agreement</h1>
+    <div id="agreement-text"></div>
+
+    <section class="agreement-signature" aria-label="Acknowledgment">
+      <p id="ack-notice"></p>
+      <div class="signature-grid">
+        <div><span class="sig-line"></span>Volunteer name (printed)</div>
+        <div><span class="sig-line"></span>Volunteer signature</div>
+        <div><span class="sig-line"></span>Date</div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { renderAgreement, ACKNOWLEDGMENT_NOTICE } from './js/volunteer-agreement.js';
+    renderAgreement(document.getElementById('agreement-text'), 2);
+    document.getElementById('ack-notice').textContent =
+      'Online applicants acknowledge this agreement by checkbox and typed name. ' + ACKNOWLEDGMENT_NOTICE;
+    document.getElementById('print-btn').addEventListener('click', function () { window.print(); });
+  </script>
+</body>
+</html>

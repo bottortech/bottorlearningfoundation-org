@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Verification Letter — Bottor Learning Foundation</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link rel="stylesheet" href="/admin/letter.css">
+</head>
+<body class="admin-body letter-body">
+
+  <div class="letter-toolbar no-print" id="toolbar" hidden>
+    <a href="/admin#/letters" class="btn-link">← Back to dashboard</a>
+    <div class="action-row">
+      <span id="letter-status"></span>
+      <button type="button" class="btn btn-donate btn-sm" id="approve-btn" hidden>Review &amp; approve</button>
+      <button type="button" class="btn btn-primary btn-sm" id="print-btn">Print or save as PDF</button>
+    </div>
+  </div>
+
+  <div id="draft-banner" class="letter-banner no-print" role="note" hidden></div>
+
+  <div id="letter-state" class="state-box" role="status"><span class="spinner" aria-hidden="true"></span> Loading letter…</div>
+
+  <article id="letter" class="letter-page" hidden>
+    <div class="letter-watermark" id="watermark" aria-hidden="true" hidden></div>
+    <header class="letter-head">
+      <img src="/images/logo.png" alt="Bottor Learning Foundation logo">
+      <div class="letter-org">
+        <strong id="org-name"></strong>
+        <span id="org-address"></span>
+        <span id="org-contact"></span>
+      </div>
+    </header>
+
+    <p class="letter-meta"><span id="issue-date"></span><br><span id="letter-number"></span></p>
+    <p id="salutation"></p>
+    <p class="letter-subject"><strong id="subject"></strong></p>
+    <div id="body"></div>
+
+    <table class="letter-summary" id="summary"></table>
+
+    <div class="letter-sign">
+      <p id="closing"></p>
+      <div class="sig-space" aria-label="Space for handwritten signature"></div>
+      <div class="sig-rule"></div>
+      <p id="signer"></p>
+      <p class="sig-date">Date signed: ______________________</p>
+    </div>
+
+    <footer class="letter-foot" id="letter-foot"></footer>
+  </article>
+
+  <dialog id="approve-modal" class="admin-modal" aria-labelledby="approve-title">
+    <form method="dialog" id="approve-form">
+      <header class="modal-header">
+        <h2 id="approve-title">Approve verification letter</h2>
+      </header>
+      <div id="approve-error" class="form-alert form-alert-error" role="alert" hidden></div>
+      <div class="modal-body">
+        <p>Approving issues this letter under <strong>your name and title</strong>. The verified hour totals are re-checked against the records when you approve.</p>
+        <p>The letter will show your typed name and title below a blank line. It must be <strong>signed by hand</strong> after printing. No signature is generated.</p>
+        <label class="check-label">
+          <input type="checkbox" id="confirm-reviewed">
+          <span>I have reviewed this volunteer's supervisor-approved hour records and confirm the totals on this letter are accurate.</span>
+        </label>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="approve-cancel">Cancel</button>
+        <button type="submit" class="btn btn-donate btn-sm" id="approve-submit">Approve letter</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script type="module" src="/admin/letter.js"></script>
+</body>
+</html>

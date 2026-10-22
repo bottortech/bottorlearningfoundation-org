@@ -1,0 +1,16 @@
+{
+  "name": "bottorlearningfoundation-org",
+  "private": true,
+  "type": "module",
+  "description": "Bottor Learning Foundation website and volunteer management system",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node dev/server.js",
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3"
+  }
+}

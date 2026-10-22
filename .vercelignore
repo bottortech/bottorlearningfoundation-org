@@ -1,0 +1,7 @@
+# Local-only: never deployed
+dev/
+tests/
+supabase/
+docs/
+.env
+.env.*

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Volunteer Dashboard — Bottor Learning Foundation</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-body">
+
+  <!-- Shown until the session check finishes -->
+  <div id="boot" class="admin-boot" role="status">
+    <span class="spinner" aria-hidden="true"></span> Loading dashboard…
+  </div>
+
+  <!-- ========== SIGN IN ========== -->
+  <main id="login-view" class="login-view" hidden>
+    <form id="login-form" class="login-card contact-form" novalidate>
+      <img src="/images/logo.png" alt="Bottor Learning Foundation Logo" class="login-logo">
+      <h1>Volunteer Dashboard</h1>
+      <p class="login-sub">Staff sign-in. This area is for authorized Bottor Learning Foundation staff only.</p>
+      <div id="login-error" class="form-alert form-alert-error" role="alert" hidden></div>
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" name="email" autocomplete="username" required>
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+      <button type="submit" class="btn btn-primary login-btn" id="login-btn">Sign In</button>
+      <p class="login-help">Forgot your password or need access? Contact a foundation administrator.</p>
+    </form>
+  </main>
+
+  <!-- ========== APP ========== -->
+  <div id="app-view" class="admin-app" hidden>
+    <header class="admin-topbar">
+      <a href="#/overview" class="admin-brand">
+        <img src="/images/logo.png" alt="">
+        <span>Volunteer Dashboard</span>
+      </a>
+      <div class="admin-user">
+        <span id="user-name"></span>
+        <span class="role-badge" id="user-role"></span>
+        <button type="button" class="btn-link" id="logout-btn">Sign out</button>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <nav class="admin-nav" aria-label="Dashboard sections">
+        <a href="#/overview" data-view="overview">Overview</a>
+        <a href="#/applications" data-view="applications" data-perm="applications.review">Applications</a>
+        <a href="#/volunteers" data-view="volunteers" data-perm="volunteers.view">Volunteers</a>
+        <a href="#/assignments" data-view="assignments" data-perm="assignments.view">Assignments</a>
+        <a href="#/hours" data-view="hours" data-perm="hours.view">Hours</a>
+        <a href="#/letters" data-view="letters" data-perm="letters.view">Letters</a>
+        <a href="#/retention" data-view="retention" data-perm="retention.manage">Data Retention</a>
+        <a href="#/audit" data-view="audit" data-perm="audit.view">Audit Log</a>
+      </nav>
+      <main id="main" class="admin-main" tabindex="-1" aria-live="polite"></main>
+    </div>
+  </div>
+
+  <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
+
+  <dialog id="modal" class="admin-modal" aria-labelledby="modal-title">
+    <form method="dialog" id="modal-form" novalidate>
+      <header class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button type="button" class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      </header>
+      <div id="modal-error" class="form-alert form-alert-error" role="alert" hidden></div>
+      <div id="modal-body" class="modal-body"></div>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="modal-submit">Save</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>
