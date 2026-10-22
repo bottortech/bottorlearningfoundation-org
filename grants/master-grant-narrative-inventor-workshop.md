@@ -12,7 +12,7 @@ Dollar figures below reflect a $10,000 baseline ask (sized for a typical small/f
 ## Organization Mailing Address
 
 Bottor Learning Foundation
-11411 W. Park Place, Suite 202
+11414 W. Park Place, Suite 202
 Milwaukee, WI 53224
 
 *(Use this address for all correspondence, applications, and agreements. Event venues — e.g., Kuumba Juice + Coffee for the Demo Dat Discography event — are never the organization's mailing address.)*
@@ -111,5 +111,5 @@ Before adapting this narrative for a new funder, check:
 3. **Exclusions** — check for standard funder exclusions before budgeting: general operating support/overhead, capital campaigns or building projects, fundraising drives or event sponsorships, ongoing (vs. one-time) technology requests. Reframe budget line notes to make clear which category each cost falls into.
 4. **Award size** — scale the budget model up or down to the funder's typical grant range or stated cap; keep category ratios consistent where possible.
 5. **Named partners** — only name specific partner organizations (e.g., Vision Minds Entertainment, Kuumba Juice & Coffee for the Demo Dat Discography event) if that specific funder's project actually involves them. This master narrative intentionally excludes them since they belong to Bottor's supporting community-literacy programming, not the Inventor Workshop itself.
-6. **Org address / mailing info** — resolved: 11411 W. Park Place, Suite 202, Milwaukee, WI 53224 (see Organization Mailing Address above). Use this for the application's org-info fields; don't substitute an event venue address.
+6. **Org address / mailing info** — resolved: 11414 W. Park Place, Suite 202, Milwaukee, WI 53224 (see Organization Mailing Address above). Use this for the application's org-info fields; don't substitute an event venue address.
 7. **Participant/impact numbers** — the "4–6 cohorts / 100–150 students" estimate is a placeholder tied to this specific $10,000/$12,500 budget model, not a confirmed schedule. Replace it with the actual planned cohort count and size for the funder's grant period before submitting, and recalculate if the award size or program scope changes.
