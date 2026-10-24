@@ -167,6 +167,11 @@ function showConfirmation(result, payload) {
   document.getElementById('print-ack-record').innerHTML = '';
   document.getElementById('print-ack-record').appendChild(document.getElementById('ack-record').cloneNode(true));
 
+  // From here on, any print (button, ⌘P, File → Export as PDF) produces the
+  // agreement copy. The class is never toggled around window.print(): Safari
+  // prints asynchronously, and changing the layout mid-print yields blank PDFs.
+  document.body.classList.add('print-agreement-mode');
+
   form.hidden = true;
   summary.hidden = true;
   const panel = document.getElementById('volunteer-confirmation');
@@ -233,11 +238,7 @@ function init() {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
   document.getElementById('court_deadline').min = today;
 
-  document.getElementById('print-agreement').addEventListener('click', function () {
-    document.body.classList.add('print-agreement-mode');
-    window.print();
-  });
-  window.addEventListener('afterprint', function () { document.body.classList.remove('print-agreement-mode'); });
+  document.getElementById('print-agreement').addEventListener('click', function () { window.print(); });
   form.addEventListener('submit', onSubmit);
 
   const preset = new URLSearchParams(window.location.search).get('path');

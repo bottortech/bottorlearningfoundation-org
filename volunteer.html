@@ -6,6 +6,7 @@
   <title>Volunteer — Bottor Learning Foundation</title>
   <meta name="description" content="Volunteer with Bottor Learning Foundation in Milwaukee. Support the Bottor Inventor Workshop, literacy events, and book distribution — or complete court-ordered community service hours with supervision and verified reporting.">
   <link rel="stylesheet" href="styles.css">
+  <style media="print">@page { size: letter; margin: 0.6in; }</style>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
@@ -397,10 +398,25 @@
       </div>
 
       <!-- Printable agreement copy (print only) -->
-      <div id="print-agreement-copy" class="print-only" aria-hidden="true">
-        <h1>Bottor Learning Foundation — Volunteer Agreement</h1>
+      <div id="print-agreement-copy" class="print-only agreement-document" aria-hidden="true">
+        <header class="agreement-letterhead">
+          <img src="images/logo.png" alt="Bottor Learning Foundation Logo">
+          <div>
+            <strong>Bottor Learning Foundation</strong><br>
+            11414 W. Park Place, Suite 202, Milwaukee, WI 53224<br>
+            info@bottorlearningfoundation.org · EIN 41-3321544
+          </div>
+        </header>
+        <h1>Volunteer Agreement</h1>
         <div id="print-agreement-text"></div>
         <div id="print-ack-record"></div>
+        <section class="agreement-signature">
+          <div class="signature-grid">
+            <div><span class="sig-line"></span>Volunteer name (printed)</div>
+            <div><span class="sig-line"></span>Volunteer signature</div>
+            <div><span class="sig-line"></span>Date</div>
+          </div>
+        </section>
       </div>
     </div>
   </section>
