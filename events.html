@@ -87,6 +87,53 @@
     </div>
   </section>
 
+  <!-- ========== COMMUNITY PHOTO GALLERY ==========
+       Photos live in images/gallery/ (web copies with location data removed).
+       Originals stay in images/event photos/, which is never published. -->
+  <section class="section community-gallery" id="community-gallery" aria-labelledby="community-gallery-heading">
+    <div class="container">
+      <div class="section-header">
+        <h2 id="community-gallery-heading">In the Community</h2>
+        <p>Children and families playing WiggleWoo's Word Quest at our free community events. Select a photo to view it larger.</p>
+      </div>
+
+      <h3 class="gallery-group-title">Candyland Community Event · Dominican Center · October 3, 2026</h3>
+      <div class="gallery-grid">
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/9ff24ada-8130-44bb-96c2-9fc21c20ad4d.jpg"><img src="images/gallery/9ff24ada-8130-44bb-96c2-9fc21c20ad4d-thumb.jpg" alt="Two young people play WiggleWoo's Word Quest on tablets at the Bottor Learning Foundation table, with Professor WiggleWoo books on display" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_0398.jpg"><img src="images/gallery/img_0398-thumb.jpg" alt="A child leans over the table and uses a stylus to play WiggleWoo's Word Quest on a tablet" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_0411.jpg"><img src="images/gallery/img_0411-thumb.jpg" alt="A child wearing headphones plays WiggleWoo's Word Quest on a tablet, with the outdoor event behind them" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_0418.jpg"><img src="images/gallery/img_0418-thumb.jpg" alt="Two children wearing headphones play WiggleWoo's Word Quest side by side at an outdoor community event" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_0420.jpg"><img src="images/gallery/img_0420-thumb.jpg" alt="Two children at the WiggleWoo's Word Quest table, one wearing headphones and playing on a tablet" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_0423.jpg"><img src="images/gallery/img_0423-thumb.jpg" alt="A child wearing headphones uses a stylus to play WiggleWoo's Word Quest on a tablet" loading="lazy" width="540" height="720"></button></figure>
+      </div>
+
+      <!-- ✅ EVENT NAME — confirm the name of the October 10, 2026 event -->
+      <h3 class="gallery-group-title">Community Event · October 10, 2026</h3>
+      <div class="gallery-grid">
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_1745.jpg"><img src="images/gallery/img_1745-thumb.jpg" alt="A child plays WiggleWoo's Word Quest on a tablet next to a laptop and a screen showing the game" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_1747.jpg"><img src="images/gallery/img_1747-thumb.jpg" alt="Two children play WiggleWoo's Word Quest at a table with a large touchscreen showing the game" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_1749.jpg"><img src="images/gallery/img_1749-thumb.jpg" alt="A child plays a WiggleWoo's Word Quest letter game on a tablet beside a touchscreen" loading="lazy" width="540" height="720"></button></figure>
+      </div>
+
+      <h3 class="gallery-group-title">WiggleWoo's Word Quest · Milwaukee Public Library, Center Street Branch · October 17, 2026</h3>
+      <div class="gallery-grid">
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_0462.jpg"><img src="images/gallery/img_0462-thumb.jpg" alt="Three children play WiggleWoo's Word Quest on tablets at a library community room table" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_0463.jpg"><img src="images/gallery/img_0463-thumb.jpg" alt="Children play WiggleWoo's Word Quest on tablets around a table at a Milwaukee Public Library community room" loading="lazy" width="540" height="720"></button></figure>
+        <figure class="gallery-item"><button type="button" class="gallery-open" data-full="images/gallery/img_0464.jpg"><img src="images/gallery/img_0464-thumb.jpg" alt="Two children play WiggleWoo's Word Quest on tablets at the library" loading="lazy" width="540" height="720"></button></figure>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="gallery-lightbox" id="gallery-lightbox" aria-label="Photo viewer">
+    <button type="button" class="lightbox-close" aria-label="Close photo">&times;</button>
+    <button type="button" class="lightbox-nav lightbox-prev" aria-label="Previous photo">&#8249;</button>
+    <figure>
+      <img id="lightbox-img" src="" alt="">
+      <figcaption id="lightbox-caption"></figcaption>
+    </figure>
+    <button type="button" class="lightbox-nav lightbox-next" aria-label="Next photo">&#8250;</button>
+  </dialog>
+
   <!-- ========== CTA ========== -->
   <section class="cta-banner">
     <div class="container">
@@ -158,6 +205,7 @@
 
   <script src="events-data.js"></script>
   <script src="events.js"></script>
+  <script src="gallery.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

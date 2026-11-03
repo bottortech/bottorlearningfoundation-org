@@ -12,3 +12,6 @@ node_modules/
 .env
 .env.local
 .vercel
+
+# Original event photos (contain GPS/location data) — publish only the stripped copies in images/gallery/
+images/event photos/
