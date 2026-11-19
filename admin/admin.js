@@ -1,7 +1,7 @@
 /* ============================================
-   BOTTOR LEARNING FOUNDATION — Volunteer Dashboard
+   BOTTOR LEARNING FOUNDATION — Foundation Management Portal
    All data comes from the authenticated /api/admin endpoints;
-   this page itself contains no volunteer records.
+   this page itself contains no volunteer, donor, or inventory records.
    ============================================ */
 import {
   INTEREST_OPTIONS, AVAILABILITY_OPTIONS, COURT_REPORTED_STATUS_OPTIONS,
@@ -245,7 +245,8 @@ const VIEWS = {
   hours: viewHours,
   letters: viewLetters,
   retention: viewRetention,
-  audit: viewAudit
+  audit: viewAudit,
+  team: viewTeam
 };
 
 function route() {
@@ -841,10 +842,73 @@ async function viewAudit() {
       '</tbody></table></div>' : emptyState('No events yet.'));
 }
 
+/* ---------- Team & Permissions ---------- */
+
+const openTeamMembers = new Set();
+
+async function viewTeam() {
+  loading('Loading team…');
+  const res = await api('admin/team');
+  if (!res.ok) return errorState(res.data.error, viewTeam);
+  const catalog = res.data.catalog;
+  const members = res.data.members;
+  const groups = [];
+  catalog.forEach((p) => { if (groups.indexOf(p.group) === -1) groups.push(p.group); });
+
+  const sourceText = (perm) => perm.source === 'grant' ? 'Granted individually'
+    : perm.source === 'revoke' ? 'Revoked individually' : 'From role';
+
+  const overrideCount = (m) => Object.values(m.permissions).filter((p) => p.source !== 'role').length;
+  const memberCard = (m) => '<details class="panel team-member" data-member="' + esc(m.id) + '"' + (openTeamMembers.has(m.id) ? ' open' : '') + '>' +
+    '<summary class="panel-head"><div><h2>' + esc(m.full_name) + '</h2><p class="muted-text small">' + esc(m.email) +
+    (m.title ? ' · ' + esc(m.title) : '') + '</p></div><div>' +
+    (overrideCount(m) ? '<span class="badge badge-blue">' + overrideCount(m) + ' individual change' + (overrideCount(m) === 1 ? '' : 's') + '</span> ' : '') +
+    '<span class="role-badge">' + esc(LABELS.role[m.role] || m.role) + '</span>' +
+    (m.active ? '' : ' <span class="badge badge-muted">Inactive</span>') + '</div></summary>' +
+    (m.id === state.staff.id ? '<p class="field-hint">This is you. Administrator-only permissions can’t be changed.</p>' : '') +
+    groups.map((g) => '<fieldset class="perm-group"><legend>' + esc(g) + '</legend>' +
+      catalog.filter((p) => p.group === g).map((p) => {
+        const perm = m.permissions[p.key];
+        return '<div class="perm-row">' +
+          '<label class="check-label"><input type="checkbox" data-perm-key="' + esc(p.key) + '"' + (perm.allowed ? ' checked' : '') +
+          (p.admin_only ? ' disabled' : '') + '> <span>' + esc(p.label) + '</span></label>' +
+          '<span class="perm-source perm-source-' + esc(perm.source) + '">' + (p.admin_only ? 'Administrators only' : sourceText(perm)) + '</span>' +
+          (perm.source !== 'role' && !p.admin_only ? ' <button type="button" class="btn-link small" data-reset-key="' + esc(p.key) + '">Use role default</button>' : '') +
+          '</div>';
+      }).join('') + '</fieldset>').join('') + '</details>';
+
+  main.innerHTML = '<div class="view-header"><h1>Team &amp; Permissions</h1></div>' +
+    '<p class="field-hint">Select a person to see and change their access. Each person starts with their role’s default access. Check or uncheck a box to grant or revoke that one permission for that person. Only administrators can change permissions, and changes take effect on the person’s next action. Every change is recorded in the activity log.</p>' +
+    (members.length ? members.map(memberCard).join('') : emptyState('No team members yet.'));
+
+  async function change(memberId, key, effect, control) {
+    if (control) control.disabled = true;
+    const r = await api('admin/team-permission', { method: 'POST', body: { staff_id: memberId, permission: key, effect: effect } });
+    if (!r.ok) {
+      toast(r.data.error || 'Could not change that permission.', 'bad');
+      if (control) { control.checked = !control.checked; control.disabled = false; }
+      return;
+    }
+    toast('Permission updated for ' + r.data.member.full_name + '.');
+    viewTeam();
+  }
+
+  main.querySelectorAll('.team-member').forEach((card) => {
+    const memberId = card.dataset.member;
+    card.addEventListener('toggle', () => { if (card.open) openTeamMembers.add(memberId); else openTeamMembers.delete(memberId); });
+    card.querySelectorAll('input[data-perm-key]').forEach((box) => {
+      box.addEventListener('change', () => change(memberId, box.dataset.permKey, box.checked ? 'grant' : 'revoke', box));
+    });
+    card.querySelectorAll('[data-reset-key]').forEach((btn) => {
+      btn.addEventListener('click', () => change(memberId, btn.dataset.resetKey, 'default', null));
+    });
+  });
+}
+
 /* ---------- Boot ---------- */
 
 (async function boot() {
   const res = await api('auth/session', { allow401: true });
   if (res.ok) startApp(res.data);
-  else showLogin(res.status === 0 || res.status >= 500 ? (res.data.error || 'The dashboard is unavailable right now.') : null);
+  else showLogin(res.status === 0 || res.status >= 500 ? (res.data.error || 'The portal is unavailable right now.') : null);
 })();

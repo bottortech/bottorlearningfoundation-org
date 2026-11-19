@@ -20,6 +20,7 @@ import {
 } from '../_lib/services/letters.js';
 import { purgeRecords, retentionOverview } from '../_lib/services/retention.js';
 import { dashboardSummary, listAudit } from '../_lib/services/overview.js';
+import { listTeam, setPermission } from '../_lib/services/team.js';
 
 function route(permission, handle) {
   return { permission: permission, handle: handle };
@@ -93,6 +94,12 @@ export const ROUTES = {
   },
   audit: {
     GET: route('audit.view', (ctx, staff, r) => listAudit(ctx, staff, r.query))
+  },
+  team: {
+    GET: route('permissions.manage', (ctx) => listTeam(ctx))
+  },
+  'team-permission': {
+    POST: route('permissions.manage', (ctx, staff, r) => setPermission(ctx, staff, r.body))
   }
 };
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>Volunteer Dashboard — Bottor Learning Foundation</title>
+  <title>Foundation Management Portal — Bottor Learning Foundation</title>
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/admin/admin.css">
 </head>
@@ -19,7 +19,7 @@
   <main id="login-view" class="login-view" hidden>
     <form id="login-form" class="login-card contact-form" novalidate>
       <img src="/images/logo.png" alt="Bottor Learning Foundation Logo" class="login-logo">
-      <h1>Volunteer Dashboard</h1>
+      <h1>Foundation Management Portal</h1>
       <p class="login-sub">Staff sign-in. This area is for authorized Bottor Learning Foundation staff only.</p>
       <div id="login-error" class="form-alert form-alert-error" role="alert" hidden></div>
       <label for="login-email">Email</label>
@@ -36,7 +36,7 @@
     <header class="admin-topbar">
       <a href="#/overview" class="admin-brand">
         <img src="/images/logo.png" alt="">
-        <span>Volunteer Dashboard</span>
+        <span>Foundation Management Portal</span>
       </a>
       <div class="admin-user">
         <span id="user-name"></span>
@@ -46,7 +46,7 @@
     </header>
 
     <div class="admin-layout">
-      <nav class="admin-nav" aria-label="Dashboard sections">
+      <nav class="admin-nav" aria-label="Portal sections">
         <a href="#/overview" data-view="overview">Overview</a>
         <a href="#/applications" data-view="applications" data-perm="applications.review">Applications</a>
         <a href="#/volunteers" data-view="volunteers" data-perm="volunteers.view">Volunteers</a>
@@ -55,6 +55,7 @@
         <a href="#/letters" data-view="letters" data-perm="letters.view">Letters</a>
         <a href="#/retention" data-view="retention" data-perm="retention.manage">Data Retention</a>
         <a href="#/audit" data-view="audit" data-perm="audit.view">Audit Log</a>
+        <a href="#/team" data-view="team" data-perm="permissions.manage">Team &amp; Permissions</a>
       </nav>
       <main id="main" class="admin-main" tabindex="-1" aria-live="polite"></main>
     </div>

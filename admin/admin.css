@@ -1,5 +1,5 @@
 /* ============================================
-   BOTTOR LEARNING FOUNDATION — Volunteer Dashboard
+   BOTTOR LEARNING FOUNDATION — Foundation Management Portal
    Builds on the brand variables in /styles.css
    ============================================ */
 
@@ -776,4 +776,89 @@ progress::-moz-progress-bar {
     left: 16px;
     right: 16px;
   }
+}
+
+/* ---------- Team & Permissions ---------- */
+.perm-group {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 10px 14px 6px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
+.perm-group legend {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--blue-dark);
+  padding: 0 6px;
+}
+
+.perm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 4px 0;
+}
+
+.perm-row .check-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1 1 280px;
+  font-size: 0.93rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.perm-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--blue);
+}
+
+.perm-row input:disabled + span {
+  color: var(--gray-600);
+}
+
+.perm-source {
+  font-size: 0.78rem;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.perm-source-grant {
+  color: var(--green-dark);
+  font-weight: 600;
+}
+
+.perm-source-revoke {
+  color: #9B2C2C;
+  font-weight: 600;
+}
+
+.team-member > summary {
+  cursor: pointer;
+  list-style: none;
+  margin-bottom: 0;
+}
+
+.team-member > summary::-webkit-details-marker {
+  display: none;
+}
+
+.team-member > summary h2::before {
+  content: "▸ ";
+  color: var(--gray-600);
+}
+
+.team-member[open] > summary {
+  margin-bottom: 12px;
+}
+
+.team-member[open] > summary h2::before {
+  content: "▾ ";
 }

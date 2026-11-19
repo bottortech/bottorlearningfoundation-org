@@ -1,4 +1,6 @@
-# Volunteer Management System — Setup & Operations
+# Foundation Management Portal — Setup & Operations
+
+(Formerly the Volunteer Dashboard. It now also covers donations, inventory, impact reporting, and donor acknowledgments, which are being added in phases.)
 
 The public site is still plain static HTML. The volunteer system adds:
 
@@ -10,7 +12,7 @@ The public site is still plain static HTML. The volunteer system adds:
 | Printable verification letter | `admin/letter.html` |
 | API (Vercel serverless functions) | `api/apply.js`, `api/auth/[action].js`, `api/admin/[resource].js` |
 | Business rules | `api/_lib/services/*`, `js/volunteer-core.js` (shared with the browser) |
-| Database schema | `supabase/migrations/20261021000000_volunteer_management.sql` |
+| Database schema | `supabase/migrations/20261021000000_volunteer_management.sql` (volunteers) and `20261118000000_foundation_management.sql` (permissions, donations, inventory, impact, acknowledgments) |
 
 Only 3 serverless functions are used, which keeps the project well under the Vercel Hobby plan's limit of 12.
 
@@ -83,3 +85,14 @@ npm test         # 60 tests: validation, permissions, hours, approvals, letters
 - **Spam protection.** A hidden honeypot field, a minimum time to fill in the form, and a per-connection rate limit (5 per hour). Rate limiting stores salted hashes, never raw IP addresses.
 - **Retention.** Declined or withdrawn applications become eligible for purge after 12 months, and former volunteers 3 years after service ends. Purging is a manual, admin-only step under **Data Retention** and requires typing `PURGE`. The privacy notice on `volunteer.html` states the same periods, so change both together.
 - **Email.** The system **does not send email**. Staff contact applicants directly.
+
+## Migration 002 — Foundation Management Portal (2026-11-18)
+
+Run `supabase/migrations/20261118000000_foundation_management.sql` once, in **Supabase → SQL Editor**, before publishing Phase 2. It only **adds** tables. Existing volunteer records, staff accounts, and roles are untouched.
+
+## Per-person permissions
+
+- Each role still has its default access (see `api/_lib/permissions.js`).
+- An administrator can grant or revoke any single permission for one person in **Portal → Team & Permissions**. Changes take effect on that person's next action and are recorded in the activity log.
+- Administrator-only, never grantable: assigning permissions, approving verification letters, purging records, and approving public impact figures.
+- New donation, inventory, impact, acknowledgment, and export permissions start **administrator-only**. Nobody else gets them until an administrator grants them.

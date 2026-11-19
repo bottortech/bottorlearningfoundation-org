@@ -51,7 +51,23 @@ export function readSessionTokens(req) {
 
 export async function findActiveStaff(ctx, authUserId) {
   const rows = await ctx.repo.list('staff_users', { eq: { auth_user_id: authUserId, active: true }, limit: 1 });
-  return rows[0] || null;
+  const staff = rows[0] || null;
+  if (staff) staff.permission_overrides = await loadPermissionOverrides(ctx, staff.id);
+  return staff;
+}
+
+export async function loadPermissionOverrides(ctx, staffId) {
+  try {
+    const grants = await ctx.repo.list('staff_permission_grants', { eq: { staff_id: staffId } });
+    const map = {};
+    grants.forEach(function (g) { map[g.permission] = g.effect; });
+    return map;
+  } catch (err) {
+    // Before migration 002 runs, the table doesn't exist yet: fall back to
+    // role defaults so sign-in keeps working.
+    if (err && (err.code === 'PGRST205' || err.code === '42P01')) return {};
+    throw err;
+  }
 }
 
 /**
