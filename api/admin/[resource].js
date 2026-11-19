@@ -22,6 +22,10 @@ import { purgeRecords, retentionOverview } from '../_lib/services/retention.js';
 import { dashboardSummary, listAudit } from '../_lib/services/overview.js';
 import { listTeam, setPermission } from '../_lib/services/team.js';
 import {
+  createImpactEvent, eventReport, exportImpactCsv, impactReport, impactTrend, listBaselines, listGoals,
+  listImpactEvents, setBaseline, setEventCount, setGoal, updateImpactEvent, yearOverYear
+} from '../_lib/services/impact.js';
+import {
   createAcknowledgment, finalizeAcknowledgment, getAcknowledgment, getSignature, listAcknowledgments,
   recordSent, saveSignature, updateAcknowledgment, voidAcknowledgment
 } from '../_lib/services/acknowledgments.js';
@@ -174,6 +178,34 @@ export const ROUTES = {
   signature: {
     GET: route('acknowledgments.sign', (ctx, staff) => getSignature(ctx, staff)),
     POST: route('acknowledgments.sign', (ctx, staff, r) => saveSignature(ctx, staff, r.body), { maxBody: 1024 * 1024 })
+  },
+  'impact-report': {
+    GET: route('impact.view', (ctx, staff, r) => impactReport(ctx, staff, r.query))
+  },
+  'impact-trend': {
+    GET: route('impact.view', (ctx, staff, r) => impactTrend(ctx, staff, r.query))
+  },
+  'impact-yoy': {
+    GET: route('impact.view', (ctx, staff, r) => yearOverYear(ctx, staff, r.query))
+  },
+  'impact-events': {
+    GET: route('impact.view', (ctx, staff, r) => r.query.id ? eventReport(ctx, staff, r.query.id) : listImpactEvents(ctx)),
+    POST: route('impact.record', (ctx, staff, r) => createImpactEvent(ctx, staff, r.body)),
+    PATCH: route('impact.record', (ctx, staff, r) => updateImpactEvent(ctx, staff, r.query.id, r.body))
+  },
+  'impact-count': {
+    POST: route('impact.record', (ctx, staff, r) => setEventCount(ctx, staff, r.body))
+  },
+  'impact-goals': {
+    GET: route('impact.view', (ctx, staff, r) => listGoals(ctx, staff, r.query)),
+    POST: route('impact.goals', (ctx, staff, r) => setGoal(ctx, staff, r.body))
+  },
+  'impact-baselines': {
+    GET: route('impact.view', (ctx) => listBaselines(ctx)),
+    POST: route('impact.record', (ctx, staff, r) => setBaseline(ctx, staff, r.body))
+  },
+  'impact-export': {
+    GET: route('records.export', (ctx, staff, r) => exportImpactCsv(ctx, staff, r.query))
   },
   'program-events': {
     GET: route('dashboard.view', (ctx) => listProgramEvents(ctx)),

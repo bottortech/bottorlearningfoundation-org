@@ -128,4 +128,27 @@ export async function seedDemoData(ctx) {
     estimated_value: null, notes: null, is_historical: false, request_id: null, status: 'active', void_reason: null,
     created_by: staff.admin.id, created_at: daysAgo(5).toISOString(), updated_at: daysAgo(5).toISOString()
   });
+
+  // Impact demo data (fictional): events across this year and last, counts, a goal.
+  const year = new Date().getFullYear();
+  const pe = (name, date, participation) => r.insert('program_events', {
+    id: randomUUID(), name: name, event_date: date, participation: participation, location: 'Milwaukee', public_event_id: null,
+    notes: null, created_by: staff.admin.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+  });
+  const cnt = (ev, metric, value, qualifier) => r.insert('event_impact_counts', {
+    id: randomUUID(), event_id: ev.id, metric: metric, value: value, qualifier: qualifier || 'exact', notes: null,
+    recorded_by: staff.admin.id, recorded_at: new Date().toISOString(), updated_at: new Date().toISOString()
+  });
+  const last1 = await pe('Demo Spring Library Day', (year - 1) + '-04-12', 'hosted');
+  await cnt(last1, 'children_served', 35); await cnt(last1, 'families_served', 20); await cnt(last1, 'books_distributed', 30);
+  const last2 = await pe('Demo Fall Fair', (year - 1) + '-10-04', 'exhibited');
+  await cnt(last2, 'children_served', 60, 'approximate'); await cnt(last2, 'books_distributed', 45, 'approximate');
+  const e1 = await pe('Demo Literacy Night', year + '-03-14', 'hosted');
+  await cnt(e1, 'children_served', 42); await cnt(e1, 'families_served', 25); await cnt(e1, 'attendance', 70);
+  const e2 = await pe('Demo Career Day', year + '-06-20', 'exhibited');
+  await cnt(e2, 'children_served', 90, 'estimated'); await cnt(e2, 'table_interactions', 200, 'minimum'); await cnt(e2, 'activity_plays', 100, 'approximate');
+  await cnt(e2, 'clothing_distributed', 40);
+  await cnt(ev, 'children_served', 55); await cnt(ev, 'families_served', 30); await cnt(ev, 'game_participants', 48);
+  await r.insert('impact_goals', { id: randomUUID(), goal_year: year, metric: 'children_served', target: 300, notes: null, set_by: staff.admin.id, updated_at: new Date().toISOString() });
+  await r.insert('impact_goals', { id: randomUUID(), goal_year: year, metric: 'books_distributed', target: 150, notes: null, set_by: staff.admin.id, updated_at: new Date().toISOString() });
 }

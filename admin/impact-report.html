@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Community Impact Report — Bottor Learning Foundation</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link rel="stylesheet" href="/admin/letter.css">
+  <link rel="stylesheet" href="/admin/impact-report.css">
+</head>
+<body class="admin-body letter-body">
+
+  <div class="letter-toolbar no-print" id="toolbar" hidden>
+    <a href="/admin#/impact" class="btn-link">← Back to Community Impact</a>
+    <div class="action-row">
+      <label class="check-label no-print"><input type="checkbox" id="hide-money"> <span>Leave out donation amounts</span></label>
+      <button type="button" class="btn btn-primary btn-sm" id="print-btn">Print or save as PDF</button>
+    </div>
+  </div>
+
+  <div id="report-state" class="state-box" role="status"><span class="spinner" aria-hidden="true"></span> Building report…</div>
+
+  <article id="report" class="letter-page report-page" hidden>
+    <header class="letter-head">
+      <img src="/images/logo.png" alt="Bottor Learning Foundation logo">
+      <div class="letter-org">
+        <strong>Bottor Learning Foundation</strong>
+        <span>11414 W. Park Place, Suite 202 · Milwaukee, WI 53224</span>
+        <span>info@bottorlearningfoundation.org · bottorlearningfoundation.org</span>
+      </div>
+    </header>
+
+    <h1 class="report-title" id="title"></h1>
+    <p class="report-period" id="period"></p>
+
+    <section class="report-section">
+      <h2>Executive summary</h2>
+      <div id="summary"></div>
+    </section>
+
+    <section class="report-section">
+      <h2>Key figures</h2>
+      <div class="report-tiles" id="tiles"></div>
+    </section>
+
+    <section class="report-section" id="goals-section" hidden>
+      <h2>Goals</h2>
+      <div id="goals"></div>
+    </section>
+
+    <section class="report-section" id="charts-section" hidden>
+      <h2>Monthly activity</h2>
+      <div id="charts"></div>
+    </section>
+
+    <section class="report-section" id="yoy-section" hidden>
+      <h2>Year over year</h2>
+      <div id="yoy"></div>
+    </section>
+
+    <section class="report-section" id="events-section" hidden>
+      <h2 id="events-title">Events</h2>
+      <div id="events"></div>
+    </section>
+
+    <section class="report-section report-notes">
+      <h2>About these figures</h2>
+      <ul id="notes"></ul>
+    </section>
+
+    <footer class="letter-foot" id="foot"></footer>
+  </article>
+
+  <script type="module" src="/admin/impact-report.js"></script>
+</body>
+</html>

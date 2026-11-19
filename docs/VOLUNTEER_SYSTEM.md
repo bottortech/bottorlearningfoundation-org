@@ -109,3 +109,24 @@ Run `supabase/migrations/20261118000000_foundation_management.sql` once, in **Su
   - Have your accountant review the wording once before you start sending letters.
 - Finalizing and signing letters is administrator-only. When you finalize, you choose either your uploaded digital signature or space for a handwritten one. Each issued letter keeps a frozen copy of the signature used.
 - **Nothing is ever sent by the system.** Print or save the letter as a PDF, send it yourself, then click **Record as sent** (date and method).
+
+## Community impact reports (Phase 5)
+
+Run `supabase/migrations/20261119000000_impact_reporting.sql` once in **Supabase → SQL Editor** before publishing Phase 5. It adds a "covers from" date to starting totals, and allows "table interactions" and "tablet activity plays" as event counts.
+
+**Where each figure comes from:**
+
+| Figure | Source |
+|---|---|
+| Books, clothing, educational supplies, and other items distributed | Inventory distributions. A typed event count is used only for events with no linked inventory in that category. |
+| Volunteer hours | Supervisor-approved hour entries only |
+| Monetary and in-kind donations | Donation records. Dollar amounts need donor-amount access. |
+| Events hosted and attended | Events recorded under **Community Impact → Add event**. Past website-calendar events can be imported once each. |
+| Children, families, attendance, game participants, table interactions, tablet plays | Counts recorded per event, each marked exact, about, estimated, or "or more" |
+
+**How the figures are counted:**
+- **Count types carry into totals.** A total that includes an estimate is labeled estimated, and engagement counts are never presented as people served.
+- **Starting totals cover figures kept before the portal.** A report includes a starting total only when it covers the total's whole span. Entries dated inside that span are then skipped, so nothing is counted twice.
+- **Reports:** monthly, quarterly, annual, all-time, and custom ranges, plus monthly charts, year over year, annual goals, and single-event reports.
+- **Export:** printable PDF (with an option to leave out donation amounts) and CSV.
+- **The public website figures are unchanged.** Connecting them is Phase 6.

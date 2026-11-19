@@ -931,3 +931,242 @@ progress::-moz-progress-bar {
   font-size: 0.9rem;
   background: var(--white);
 }
+
+/* ---------- Impact charts ---------- */
+.chart-figure {
+  margin: 0;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.chart-tick {
+  font-size: 11px;
+  fill: var(--gray-600);
+  font-family: var(--font-sans);
+}
+
+.chart-value {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--gray-800);
+  font-family: var(--font-sans);
+}
+
+.chart-bar:hover path {
+  opacity: 0.85;
+}
+
+.chart-note,
+.yoy-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--gray-600);
+  margin: 6px 0 10px;
+}
+
+.yoy-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hatch-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 10px;
+  border: 1px solid #2B6CB0;
+  border-radius: 2px;
+  background: repeating-linear-gradient(45deg, #2B6CB0 0 2px, rgba(43, 108, 176, 0.35) 2px 5px);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.yoy-key {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.yoy-key.yoy-previous { background: #DD6B20; }
+.yoy-key.yoy-current { background: #2B6CB0; }
+
+.yoy-bars {
+  min-width: 140px;
+  width: 30%;
+}
+
+.yoy-bar {
+  display: block;
+  height: 8px;
+  border-radius: 0 4px 4px 0;
+  margin: 3px 0;
+  width: 0;
+}
+
+.yoy-bar.yoy-previous { background: #DD6B20; }
+.yoy-bar.yoy-current { background: #2B6CB0; }
+
+.yoy-bar.yoy-est.yoy-previous {
+  background: repeating-linear-gradient(45deg, #DD6B20 0 2px, rgba(221, 107, 32, 0.35) 2px 5px);
+}
+
+.yoy-bar.yoy-est.yoy-current {
+  background: repeating-linear-gradient(45deg, #2B6CB0 0 2px, rgba(43, 108, 176, 0.35) 2px 5px);
+}
+
+.goal-list li {
+  margin-bottom: 14px;
+}
+
+.goal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.93rem;
+  margin-bottom: 4px;
+}
+
+.goal-fig {
+  color: var(--gray-700);
+  font-weight: 600;
+}
+
+.goal-track {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.goal-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #38A169;
+  border-radius: 999px;
+}
+
+.goal-fill.goal-est {
+  background: repeating-linear-gradient(45deg, #38A169 0 3px, rgba(56, 161, 105, 0.45) 3px 6px);
+}
+
+.chart-table {
+  margin-top: 8px;
+}
+
+/* ---------- Impact page ---------- */
+.range-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 16px;
+}
+
+.range-bar input[type="date"] {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.impact-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.impact-tile {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  border-top: 3px solid var(--blue);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.impact-tile.tile-empty {
+  border-top-color: var(--gray-200);
+  opacity: 0.75;
+}
+
+.impact-tile-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1.2;
+}
+
+.impact-tile-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.impact-tile-meta {
+  font-size: 0.76rem;
+  color: var(--gray-600);
+}
+
+.q-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 4px;
+  vertical-align: middle;
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
+}
+
+.q-badge.q-estimated,
+.q-badge.q-approximate,
+.q-badge.q-minimum {
+  background: var(--orange-light);
+  color: var(--orange-dark);
+  border-color: #FBD38D;
+}
+
+.count-grid .count-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 1fr 1.6fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.count-row input,
+.count-row select {
+  padding: 6px 8px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+@media (max-width: 700px) {
+  .count-grid .count-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .count-row .count-label,
+  .count-row input[name="notes"] {
+    grid-column: 1 / -1;
+  }
+}

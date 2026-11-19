@@ -7,6 +7,9 @@ import {
   INTEREST_OPTIONS, AVAILABILITY_OPTIONS, COURT_REPORTED_STATUS_OPTIONS,
   calculateNetMinutes, formatHours, todayInOrgTimeZone
 } from '/js/volunteer-core.js';
+import {
+  applyChartWidths, columnChart, formatFigure as chartFigure, goalBars, monthTable, yoyTable
+} from '/admin/charts.js';
 
 const state = { staff: null, permissions: new Set() };
 const main = document.getElementById('main');
@@ -251,7 +254,9 @@ const VIEWS = {
   donation: viewDonation,
   donors: viewDonors,
   inventory: viewInventory,
-  acknowledgments: viewAcknowledgments
+  acknowledgments: viewAcknowledgments,
+  impact: viewImpact,
+  'impact-event': viewImpactEvent
 };
 
 function route() {
@@ -260,7 +265,8 @@ function route() {
   const name = VIEWS[parts[0]] ? parts[0] : 'overview';
   document.querySelectorAll('.admin-nav a').forEach((a) => {
     const active = a.dataset.view === name || (name === 'volunteer' && a.dataset.view === 'volunteers') ||
-      ((name === 'donation' || name === 'donors') && a.dataset.view === 'donations');
+      ((name === 'donation' || name === 'donors') && a.dataset.view === 'donations') ||
+      (name === 'impact-event' && a.dataset.view === 'impact');
     a.classList.toggle('active', active);
     if (active) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
@@ -1383,6 +1389,260 @@ async function viewInventory() {
         '<div><label for="iv-d">Date *</label><input type="date" id="iv-d" name="occurred_on" max="' + today() + '" value="' + today() + '" required></div></div>' +
         '<label for="iv-r">Reason *</label><textarea id="iv-r" name="reason" rows="2" maxlength="1000" required placeholder="e.g. Recount found 3 damaged books"></textarea>',
       onSubmit: (f) => api('admin/inventory-adjust', { method: 'POST', body: { category_id: f.category_id, quantity: Number(f.quantity), occurred_on: f.occurred_on, reason: f.reason, request_id: requestId } }).then(done('Correction saved.'))
+    });
+  });
+}
+
+/* ---------- Community impact ---------- */
+
+const QUAL_OPTIONS = { exact: 'Exact', approximate: 'About (approximate)', estimated: 'Estimated', minimum: 'Or more (e.g. 200+)' };
+const QUAL_SHORT = { exact: 'Exact', approximate: 'About', estimated: 'Est.', minimum: 'Or more' };
+const SUMMARY_METRICS = ['children_served', 'families_served', 'books_distributed', 'clothing_distributed', 'supplies_distributed',
+  'game_participants', 'events_hosted', 'events_attended', 'volunteer_hours', 'monetary_donations', 'in_kind_donations'];
+
+function impactParams() {
+  const preset = sessionStorage.getItem('imp.preset') || 'year';
+  const p = new URLSearchParams({ preset });
+  if (preset === 'year') p.set('year', sessionStorage.getItem('imp.year') || String(new Date().getFullYear()));
+  if (preset === 'custom') { p.set('from', sessionStorage.getItem('imp.from') || ''); p.set('to', sessionStorage.getItem('imp.to') || ''); }
+  return p;
+}
+
+function qBadge(q) {
+  return '<span class="q-badge q-' + esc(q) + '">' + esc(QUAL_SHORT[q] || q) + '</span>';
+}
+
+function impactTile(m) {
+  if (m.hidden) return '<div class="impact-tile tile-empty"><span class="impact-tile-value">Hidden</span><span class="impact-tile-label">' + esc(m.label) + '</span><span class="impact-tile-meta">Needs access to donation amounts</span></div>';
+  return '<div class="impact-tile' + (m.has_data ? '' : ' tile-empty') + '"><span class="impact-tile-value">' + (m.has_data ? esc(chartFigure(m.value, m.qualifier, m.unit)) : '—') + '</span>' +
+    '<span class="impact-tile-label">' + esc(m.label) + (m.has_data ? qBadge(m.qualifier) : '') + '</span>' +
+    '<span class="impact-tile-meta">' + (m.has_data
+      ? (m.key === 'monetary_donations' ? m.gift_count + ' gift' + (m.gift_count === 1 ? '' : 's') : m.key === 'in_kind_donations' ? (m.items_received || 0) + ' items received' : '') +
+        (m.baseline ? ' Includes starting total through ' + fmtDate(m.baseline.as_of) + '.' : '') + (m.engagement ? ' Engagements, not unique people.' : '')
+      : 'No records yet') + '</span></div>';
+}
+
+async function loadWebsiteEvents() {
+  const read = () => { try { return BLF_EVENTS; } catch (e) { return null; } }; // eslint-disable-line no-undef
+  if (read()) return read();
+  await new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = '/events-data.js';
+    s.onload = resolve;
+    s.onerror = resolve;
+    document.head.appendChild(s);
+  });
+  return read() || [];
+}
+
+async function viewImpact() {
+  loading('Loading community impact…');
+  const params = impactParams();
+  const preset = params.get('preset');
+  const year = params.get('year') || String(new Date().getFullYear());
+  const metric = sessionStorage.getItem('imp.metric') || 'children_served';
+  const trendQ = new URLSearchParams({ metric });
+  if (preset === 'year') { trendQ.set('from', year + '-01-01'); trendQ.set('to', year === String(new Date().getFullYear()) ? today() : year + '-12-31'); }
+  if (preset === 'custom') { trendQ.set('from', params.get('from')); trendQ.set('to', params.get('to')); }
+
+  const [rep, yoy, trend] = await Promise.all([
+    api('admin/impact-report?' + params),
+    api('admin/impact-yoy?year=' + encodeURIComponent(preset === 'year' ? year : String(new Date().getFullYear()))),
+    api('admin/impact-trend?' + trendQ)
+  ]);
+  if (!rep.ok) return errorState(rep.data.error, viewImpact);
+  const r = rep.data;
+  const PRESETS = { month: 'This month', quarter: 'This quarter', year: 'Year', all: 'All time', custom: 'Custom' };
+  const years = {};
+  for (let y = new Date().getFullYear(); y >= 2024; y--) years[String(y)] = String(y);
+  const skipped = r.metrics.filter((m) => m.baseline_skipped);
+  const metricOptions = {};
+  r.metrics.filter((m) => !m.hidden).forEach((m) => { metricOptions[m.key] = m.label; });
+
+  main.innerHTML = '<div class="view-header"><h1>Community Impact</h1><div class="action-row">' +
+    '<a class="btn btn-primary btn-sm" href="/admin/impact-report.html?' + params + '" target="_blank" rel="noopener">Printable report</a>' +
+    (canDo('records.export') ? '<a class="btn btn-secondary btn-sm" download href="/api/admin/impact-export?' + params + '">Export CSV</a>' : '') +
+    (canDo('impact.record') ? '<button type="button" class="btn btn-secondary btn-sm" id="imp-add-event">Add event</button><button type="button" class="btn btn-secondary btn-sm" id="imp-baselines">Starting totals</button>' : '') +
+    (canDo('impact.goals') ? '<button type="button" class="btn btn-secondary btn-sm" id="imp-goals">Goals</button>' : '') +
+    '</div></div>' +
+    '<div class="range-bar"><div class="segmented" role="group" aria-label="Report period">' + Object.keys(PRESETS).map((k) =>
+      '<button type="button" data-preset="' + k + '" aria-pressed="' + (k === preset) + '">' + PRESETS[k] + '</button>').join('') + '</div>' +
+    (preset === 'year' ? '<label class="sr-only" for="imp-year">Year</label><select id="imp-year">' + selectOptions(years, year) + '</select>' : '') +
+    (preset === 'custom' ? '<label class="sr-only" for="imp-from">From</label><input type="date" id="imp-from" value="' + esc(params.get('from')) + '"> to ' +
+      '<label class="sr-only" for="imp-to">To</label><input type="date" id="imp-to" value="' + esc(params.get('to')) + '"><button type="button" class="btn btn-secondary btn-sm" id="imp-apply">Apply</button>' : '') +
+    '<span class="muted-text small">' + (r.range.from ? fmtDate(r.range.from) + ' – ' + fmtDate(r.range.to) : 'All recorded activity') + '</span></div>' +
+    (skipped.length ? '<div class="notice-box">Starting totals recorded before the portal (through ' + fmtDate(skipped[0].baseline_skipped.as_of) +
+      ') aren’t included here because this period covers only part of their span and they can’t be split by date. Choose a period that covers the whole span, or All time, to include them.</div>' : '') +
+    '<section class="panel"><h2>Summary</h2>' + r.summary.map((s) => '<p>' + esc(s) + '</p>').join('') + '</section>' +
+    '<div class="impact-tiles">' + r.metrics.map(impactTile).join('') + '</div>' +
+    (r.goals.length ? '<section class="panel"><h2>' + esc(r.range.year) + ' goals</h2>' + goalBars(r.goals) + '</section>' : '') +
+    '<section class="panel"><div class="panel-head"><h2>' + esc(trend.ok ? trend.data.metric.label : 'Monthly trend') + ' by month</h2>' +
+    '<label class="sr-only" for="imp-metric">Figure</label><select id="imp-metric">' + selectOptions(metricOptions, metric) + '</select></div>' +
+    (trend.ok ? columnChart(trend.data.months, { unit: trend.data.metric.unit, label: trend.data.metric.label + ' by month' }) +
+      '<details><summary class="small">Show as a table</summary>' + monthTable(trend.data.months, trend.data.metric.unit) + '</details>' +
+      '<p class="field-hint">Monthly charts show dated records only. Starting totals aren’t split by month.</p>' : '<p>' + esc(trend.data.error) + '</p>') + '</section>' +
+    '<section class="panel"><h2>Year over year</h2>' + (yoy.ok ? yoyTable(yoy.data) : esc(yoy.data.error)) + '</section>' +
+    '<section class="panel"><h2>Events</h2>' + (r.events.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Date</th><th>Event</th><th>Our role</th><th>Children</th><th>Families</th><th>Books</th><th>Clothing</th><th></th></tr></thead><tbody>' +
+      r.events.map((e) => {
+        const f = (k) => e.figures[k] ? esc(chartFigure(e.figures[k].value, e.figures[k].qualifier, 'count')) : '<span class="muted-text">—</span>';
+        return '<tr><td class="nowrap">' + fmtDate(e.event_date) + '</td><td><a href="#/impact-event/' + esc(e.id) + '">' + esc(e.name) + '</a></td><td>' + esc(PARTICIPATION_LABELS[e.participation] || e.participation) + '</td>' +
+          '<td>' + f('children_served') + '</td><td>' + f('families_served') + '</td><td>' + f('books_distributed') + '</td><td>' + f('clothing_distributed') + '</td>' +
+          '<td><a class="btn-link" href="#/impact-event/' + esc(e.id) + '">' + (canDo('impact.record') ? 'Record counts' : 'View') + '</a></td></tr>';
+      }).join('') + '</tbody></table></div>' : emptyState('No events recorded in this period. Use “Add event” to record one, or import past events from the website calendar.')) + '</section>';
+  applyChartWidths(main);
+
+  main.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => {
+    sessionStorage.setItem('imp.preset', b.dataset.preset);
+    if (b.dataset.preset === 'custom' && !sessionStorage.getItem('imp.from')) { sessionStorage.setItem('imp.from', String(new Date().getFullYear()) + '-01-01'); sessionStorage.setItem('imp.to', today()); }
+    viewImpact();
+  }));
+  const ySel = document.getElementById('imp-year');
+  if (ySel) ySel.addEventListener('change', () => { sessionStorage.setItem('imp.year', ySel.value); viewImpact(); });
+  const apply = document.getElementById('imp-apply');
+  if (apply) apply.addEventListener('click', () => {
+    sessionStorage.setItem('imp.from', document.getElementById('imp-from').value);
+    sessionStorage.setItem('imp.to', document.getElementById('imp-to').value);
+    viewImpact();
+  });
+  document.getElementById('imp-metric').addEventListener('change', (e) => { sessionStorage.setItem('imp.metric', e.target.value); viewImpact(); });
+  const addBtn = document.getElementById('imp-add-event');
+  if (addBtn) addBtn.addEventListener('click', openAddEvent);
+  const baseBtn = document.getElementById('imp-baselines');
+  if (baseBtn) baseBtn.addEventListener('click', openBaselines);
+  const goalBtn = document.getElementById('imp-goals');
+  if (goalBtn) goalBtn.addEventListener('click', () => openGoals(preset === 'year' ? year : String(new Date().getFullYear()), metricOptions));
+}
+
+async function openAddEvent() {
+  const [site, existing] = await Promise.all([loadWebsiteEvents(), api('admin/impact-events')]);
+  const linked = new Set((existing.ok ? existing.data.events : []).map((e) => e.public_event_id).filter(Boolean));
+  const past = site.filter((e) => e.date <= today() && !linked.has(e.id)).sort((a, b) => (a.date < b.date ? 1 : -1));
+  openModal({
+    title: 'Add event',
+    submitLabel: 'Add event',
+    body: (past.length ? '<label for="ev-site">From the website calendar</label><select id="ev-site" name="site"><option value="">— Enter details below —</option>' +
+      past.map((e) => '<option value="' + esc(e.id) + '">' + esc(fmtDate(e.date) + ' · ' + e.title) + '</option>').join('') + '</select>' +
+      '<p class="field-hint">Picking one fills in the details. Each calendar event can only be added once.</p>' : '') +
+      '<label for="ev-name">Event name *</label><input type="text" id="ev-name" name="name" maxlength="200" required>' +
+      '<div class="m-grid"><div><label for="ev-date">Date *</label><input type="date" id="ev-date" name="event_date" max="' + today() + '" required></div>' +
+      '<div><label for="ev-role">Our role *</label><select id="ev-role" name="participation">' + selectOptions(PARTICIPATION_LABELS, 'exhibited') + '</select></div></div>' +
+      '<label for="ev-loc">Location</label><input type="text" id="ev-loc" name="location" maxlength="300">' +
+      '<input type="hidden" name="public_event_id" id="ev-pub">' +
+      '<div id="ev-dup" hidden><label class="check-label"><input type="checkbox" name="confirm_duplicate"> <span>This is a different event on the same date</span></label></div>',
+    onOpen: (body) => {
+      const sel = body.querySelector('#ev-site');
+      if (sel) sel.addEventListener('change', () => {
+        const e = past.find((x) => x.id === sel.value);
+        body.querySelector('#ev-pub').value = e ? e.id : '';
+        if (!e) return;
+        body.querySelector('#ev-name').value = e.title;
+        body.querySelector('#ev-date').value = e.date;
+        body.querySelector('#ev-loc').value = [e.venue, e.address].filter(Boolean).join(', ');
+      });
+    },
+    onSubmit: (f) => api('admin/impact-events', { method: 'POST', body: f }).then((res) => {
+      if (res.status === 409 && res.data.possible_duplicate) document.getElementById('ev-dup').hidden = false;
+      if (res.ok) {
+        toast(res.data.existing ? 'That event was already recorded. Opening it.' : 'Event added.');
+        location.hash = '#/impact-event/' + res.data.event.id;
+      }
+      return res;
+    })
+  });
+}
+
+async function openBaselines() {
+  const res = await api('admin/impact-baselines');
+  if (!res.ok) return toast(res.data.error, 'bad');
+  const opts = {};
+  res.data.metrics.forEach((m) => { opts[m.key] = m.label; });
+  openModal({
+    title: 'Starting totals',
+    submitLabel: 'Save starting total',
+    body: '<p>Record totals you kept before the portal, such as the figures already on the website, with the dates they cover. Reports covering that whole span include the starting total and skip any entries dated inside it, so nothing is counted twice.</p>' +
+      (res.data.baselines.length ? '<ul class="letter-list">' + res.data.baselines.map((b) => '<li><strong>' + esc(b.label) + ':</strong> ' + esc(chartFigure(b.value, b.qualifier, 'count')) +
+        ' <span class="muted-text small">' + (b.period_start ? fmtDate(b.period_start) + ' – ' : 'through ') + fmtDate(b.as_of) + '</span> <button type="button" class="btn-link small" data-rm-base="' + esc(b.metric) + '">Remove</button></li>').join('') + '</ul>' : '') +
+      '<label for="bl-m">Figure</label><select id="bl-m" name="metric">' + selectOptions(opts, 'books_distributed') + '</select>' +
+      '<div class="m-grid"><div><label for="bl-v">Total *</label><input type="number" id="bl-v" name="value" min="0" step="1" required></div>' +
+      '<div><label for="bl-q">Count type *</label><select id="bl-q" name="qualifier">' + selectOptions(QUAL_OPTIONS, 'exact') + '</select></div>' +
+      '<div><label for="bl-s">Covers from</label><input type="date" id="bl-s" name="period_start"></div>' +
+      '<div><label for="bl-a">Through *</label><input type="date" id="bl-a" name="as_of" value="2026-11-02" required></div></div>' +
+      '<p class="field-hint">Without a “covers from” date, the starting total appears only in All-time reports.</p>' +
+      '<label for="bl-n">Notes</label><input type="text" id="bl-n" name="notes" maxlength="1000" placeholder="e.g. From the website totals as of Nov 2, 2026">',
+    onOpen: (body) => body.querySelectorAll('[data-rm-base]').forEach((b) => b.addEventListener('click', async () => {
+      const r = await api('admin/impact-baselines', { method: 'POST', body: { metric: b.dataset.rmBase, remove: true } });
+      if (r.ok) { toast('Starting total removed.'); closeModal(); viewImpact(); } else toast(r.data.error, 'bad');
+    })),
+    onSubmit: (f) => api('admin/impact-baselines', { method: 'POST', body: { metric: f.metric, value: Number(f.value), qualifier: f.qualifier, period_start: f.period_start || null, as_of: f.as_of, notes: f.notes } })
+      .then((r) => { if (r.ok) { toast('Starting total saved.'); viewImpact(); } return r; })
+  });
+}
+
+async function openGoals(year, metricOptions) {
+  const res = await api('admin/impact-goals?year=' + encodeURIComponent(year));
+  if (!res.ok) return toast(res.data.error, 'bad');
+  openModal({
+    title: year + ' impact goals',
+    submitLabel: 'Save goal',
+    body: (res.data.goals.length ? goalBars(res.data.goals) + '<ul class="letter-list">' + res.data.goals.map((g) => '<li>' + esc(g.label) + ': target ' + esc(chartFigure(g.target, 'exact', g.unit)) +
+      ' <button type="button" class="btn-link small" data-rm-goal="' + esc(g.metric) + '">Remove</button></li>').join('') + '</ul>' : '<p class="muted-text">No goals set for ' + esc(year) + ' yet.</p>') +
+      '<input type="hidden" name="goal_year" value="' + esc(year) + '">' +
+      '<label for="gl-m">Figure</label><select id="gl-m" name="metric">' + selectOptions(metricOptions, 'children_served') + '</select>' +
+      '<label for="gl-t">Target for ' + esc(year) + ' *</label><input type="number" id="gl-t" name="target" min="1" step="1" required>' +
+      '<label for="gl-n">Notes</label><input type="text" id="gl-n" name="notes" maxlength="500">' +
+      '<p class="field-hint">Setting a goal for a figure that already has one replaces it.</p>',
+    onOpen: (body) => { applyChartWidths(body); body.querySelectorAll('[data-rm-goal]').forEach((b) => b.addEventListener('click', async () => {
+      const r = await api('admin/impact-goals', { method: 'POST', body: { goal_year: Number(year), metric: b.dataset.rmGoal, remove: true } });
+      if (r.ok) { toast('Goal removed.'); closeModal(); viewImpact(); } else toast(r.data.error, 'bad');
+    })); },
+    onSubmit: (f) => api('admin/impact-goals', { method: 'POST', body: { goal_year: Number(f.goal_year), metric: f.metric, target: Number(f.target), notes: f.notes } })
+      .then((r) => { if (r.ok) { toast('Goal saved.'); viewImpact(); } return r; })
+  });
+}
+
+async function viewImpactEvent(id) {
+  loading('Loading event…');
+  const res = await api('admin/impact-events?id=' + encodeURIComponent(id || ''));
+  if (!res.ok) return errorState(res.data.error, () => viewImpactEvent(id));
+  const { event: e, counts, distributions, count_metrics: metrics } = res.data;
+  const byMetric = new Map(counts.map((c) => [c.metric, c]));
+  const record = canDo('impact.record');
+  const invLinked = new Set(distributions.map((d) => d.category.toLowerCase()));
+  const fromInventory = { books_distributed: 'books', clothing_distributed: 'clothing' };
+
+  main.innerHTML = '<p class="breadcrumb"><a href="#/impact">← Community Impact</a></p>' +
+    '<div class="view-header"><div><h1>' + esc(e.name) + '</h1><p class="header-badges"><span class="badge badge-blue">' + esc(PARTICIPATION_LABELS[e.participation] || e.participation) + '</span> ' +
+    '<span class="muted-text">' + fmtDate(e.event_date) + (e.location ? ' · ' + esc(e.location) : '') + '</span></p></div>' +
+    '<div class="action-row"><a class="btn btn-primary btn-sm" href="/admin/impact-report.html?event=' + esc(e.id) + '" target="_blank" rel="noopener">Printable event report</a></div></div>' +
+    '<section class="panel"><h2>Counts</h2><p class="field-hint">Record what you tracked at this event. Mark each figure exact, approximate, estimated, or “or more”. ' +
+    'Interactions and plays count engagements, not individual people.</p><div class="count-grid">' +
+    metrics.map((m) => {
+      const c = byMetric.get(m.key) || {};
+      const inv = fromInventory[m.key] && invLinked.has(fromInventory[m.key]);
+      return '<form class="count-row" data-metric="' + esc(m.key) + '"><span class="count-label"><strong>' + esc(m.label) + '</strong>' +
+        (m.engagement ? '<br><span class="muted-text small">Engagements, not people</span>' : '') +
+        (inv ? '<br><span class="muted-text small">Counted from inventory for this event</span>' : '') + '</span>' +
+        '<input type="number" name="value" min="0" step="1" aria-label="' + esc(m.label) + '" value="' + esc(c.value == null ? '' : c.value) + '"' + (record ? '' : ' disabled') + '>' +
+        '<select name="qualifier" aria-label="Count type"' + (record ? '' : ' disabled') + '>' + selectOptions(QUAL_OPTIONS, c.qualifier || 'exact') + '</select>' +
+        '<input type="text" name="notes" maxlength="1000" placeholder="Notes" aria-label="Notes" value="' + esc(c.notes || '') + '"' + (record ? '' : ' disabled') + '>' +
+        (record ? '<span class="action-row"><button type="submit" class="btn btn-secondary btn-xs">Save</button>' + (c.id ? '<button type="button" class="btn-link small" data-clear>Clear</button>' : '') + '</span>' : '<span></span>') +
+        '</form>';
+    }).join('') + '</div></section>' +
+    '<section class="panel"><h2>Items distributed (from inventory)</h2>' + (distributions.length
+      ? '<ul class="letter-list">' + distributions.map((d) => '<li>' + esc(d.quantity) + ' ' + esc(d.category.toLowerCase()) + '</li>').join('') + '</ul><p class="field-hint">When items are linked to this event in Inventory, those numbers are used and a typed count for the same category is ignored, so nothing is counted twice.</p>'
+      : emptyState('No inventory distributions are linked to this event. Link them when you record a distribution, or type a count above.')) + '</section>';
+
+  main.querySelectorAll('.count-row').forEach((row) => {
+    row.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      if (row.value.value === '') return toast('Enter a number, or use Clear.', 'warn');
+      const r = await api('admin/impact-count', { method: 'POST', body: { event_id: e.id, metric: row.dataset.metric, value: Number(row.value.value), qualifier: row.qualifier.value, notes: row.notes.value } });
+      if (r.ok) { toast(r.data.replaced ? 'Count updated.' : 'Count saved.'); viewImpactEvent(id); } else toast(r.data.error + (r.data.errors ? ' ' + Object.values(r.data.errors).join(' ') : ''), 'bad');
+    });
+    const clear = row.querySelector('[data-clear]');
+    if (clear) clear.addEventListener('click', async () => {
+      const r = await api('admin/impact-count', { method: 'POST', body: { event_id: e.id, metric: row.dataset.metric, remove: true } });
+      if (r.ok) { toast('Count cleared.'); viewImpactEvent(id); } else toast(r.data.error, 'bad');
     });
   });
 }
