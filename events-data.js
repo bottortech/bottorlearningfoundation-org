@@ -75,6 +75,21 @@ const BLF_EVENTS = [
     description: "Join Bottor Learning Foundation for a free, interactive literacy experience featuring WiggleWoo's Word Quest. Children and families can explore phonics, reading, and learning through interactive gameplay while learning more about the Foundation's literacy initiatives."
   },
   {
+    id: "family-build-a-thon-2026-11-21",
+    title: "Family Build-a-thon",
+    category: "Community Event",
+    date: "2026-11-21",
+    startTime: "09:00",
+    endTime: "12:00",
+    venue: "Brewer's Hill Event Space at Le Village",
+    room: "",
+    address: "301 E. Reservoir Ave., Milwaukee, WI 53212",
+    cost: "Free",
+    audience: "Family-Friendly",
+    status: "confirmed",
+    description: "Join Bottor Learning Foundation at the Family Build-a-thon, a family-friendly event celebrating literacy, creativity, technology, and innovation. Bottor Learning Foundation is participating as an exhibitor, and families will have an opportunity to explore interactive educational games and hands-on learning experiences. Admission is free, and no registration through our website is required."
+  },
+  {
     id: "demo-dat-discography-2026-09-05",
     title: "Demo Dat Discography: Lyrical & Literacy Hangout",
     category: "Community Event",
