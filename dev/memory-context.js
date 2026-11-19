@@ -113,12 +113,27 @@ export function createMemoryAuth() {
   };
 }
 
+export function createMemoryStorage() {
+  const files = new Map(); // path -> { buffer, contentType }
+  return {
+    files: files,
+    async upload(path, buffer, contentType) {
+      if (files.has(path)) throw new Error('File already exists: ' + path);
+      files.set(path, { buffer: buffer, contentType: contentType });
+    },
+    async signedUrl(path) {
+      return '/__dev-storage/' + encodeURIComponent(path);
+    }
+  };
+}
+
 export function createMemoryContext(options) {
   const opts = options || {};
   let now = opts.now ? new Date(opts.now) : null;
   return {
     repo: createMemoryRepo(),
     auth: createMemoryAuth(),
+    storage: createMemoryStorage(),
     config: { throttleSalt: 'test-salt', secureCookies: false },
     now: () => (now ? new Date(now) : new Date()),
     setNow(value) { now = new Date(value); }

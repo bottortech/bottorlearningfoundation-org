@@ -1,6 +1,8 @@
 import { can } from '../permissions.js';
 import { summarizeHours, todayInOrgTimeZone } from '../../../js/volunteer-core.js';
 import { youthClearance } from './volunteers.js';
+import { inventorySummary } from './inventory.js';
+import { listDonations } from './donations.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -41,6 +43,7 @@ export async function dashboardSummary(ctx, staff) {
   }
 
   return {
+    foundation: await foundationSummary(ctx, staff, today),
     counts: {
       pending_applications: can(staff, 'applications.review') ? volunteers.filter(function (v) { return v.status === 'pending'; }).length : null,
       active_volunteers: approved.length,
@@ -54,4 +57,31 @@ export async function dashboardSummary(ctx, staff) {
 export async function listAudit(ctx, staff, query) {
   const limit = Math.min(Math.max(Number(query.limit) || 200, 1), 500);
   return { events: await ctx.repo.list('audit_log', { order: ['created_at', 'desc'], limit: limit }) };
+}
+
+// Donations and inventory for the overview, limited to what this person may see.
+async function foundationSummary(ctx, staff, today) {
+  const out = {};
+  const yearStart = today.slice(0, 4) + '-01-01';
+  if (can(staff, 'donations.view')) {
+    const { donations } = await listDonations(ctx, staff, { from: yearStart, status: 'active' });
+    out.donations_this_year = donations.length;
+    out.in_kind_items_this_year = donations.reduce(function (t, d) { return t + d.item_count; }, 0);
+    if (can(staff, 'donors.view_contact')) {
+      out.monetary_this_year = donations.reduce(function (t, d) { return t + (d.amount ? Number(d.amount) : 0); }, 0);
+    }
+    const recent = (await listDonations(ctx, staff, { status: 'active' })).donations.slice(0, 5);
+    out.recent_donations = recent.map(function (d) {
+      return {
+        id: d.id, received_on: d.received_on, donor_name: d.donor_name, is_anonymous: d.is_anonymous,
+        donation_type: d.donation_type, item_summary: d.item_summary, amount: d.amount
+      };
+    });
+  }
+  if (can(staff, 'inventory.view')) {
+    const inv = await inventorySummary(ctx);
+    out.inventory_on_hand = inv.totals.on_hand;
+    out.items_distributed = inv.totals.distributed;
+  }
+  return out;
 }

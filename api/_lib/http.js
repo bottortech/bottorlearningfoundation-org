@@ -47,7 +47,8 @@ export function sendError(res, err) {
   return sendJson(res, 500, { error: 'Something went wrong on our end. Please try again.' });
 }
 
-export async function readJson(req) {
+export async function readJson(req, maxBytes) {
+  const limit = maxBytes || MAX_BODY_BYTES;
   const type = String(req.headers['content-type'] || '');
   if (!type.toLowerCase().startsWith('application/json')) {
     throw new HttpError(415, 'Requests must be sent as JSON.');
@@ -66,13 +67,13 @@ export async function readJson(req) {
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > MAX_BODY_BYTES) throw new HttpError(413, 'The request is too large.');
+    if (size > limit) throw new HttpError(413, 'The request is too large.');
     chunks.push(chunk);
   }
   return parse(Buffer.concat(chunks).toString('utf8') || '{}');
 
   function parse(text) {
-    if (text.length > MAX_BODY_BYTES) throw new HttpError(413, 'The request is too large.');
+    if (text.length > limit) throw new HttpError(413, 'The request is too large.');
     try {
       const parsed = JSON.parse(text);
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');

@@ -111,8 +111,10 @@ export function can(staff, permission) {
   return true;
 }
 
+// `permission` may be a list: the action is allowed if ANY of them is held.
 export function assertCan(staff, permission) {
-  if (!can(staff, permission)) {
+  const list = Array.isArray(permission) ? permission : [permission];
+  if (!list.some(function (p) { return can(staff, p); })) {
     throw new HttpError(403, 'Your role does not allow this action.');
   }
 }

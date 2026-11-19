@@ -862,3 +862,72 @@ progress::-moz-progress-bar {
 .team-member[open] > summary h2::before {
   content: "▾ ";
 }
+
+/* ---------- Donations & inventory ---------- */
+.overview-subhead {
+  font-size: 1.15rem;
+  color: var(--blue-dark);
+  margin: 8px 0 12px;
+}
+
+.recent-list li {
+  border-left-color: var(--green);
+  background: var(--green-light);
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 0.7fr 0.9fr auto;
+  gap: 6px;
+  align-items: start;
+}
+
+.item-row input,
+.item-row select {
+  margin-bottom: 8px !important;
+}
+
+.item-row [data-remove-item] {
+  font-size: 1.4rem;
+  line-height: 1.6;
+}
+
+.inv-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.inv-card {
+  border-left-color: var(--blue);
+}
+
+.inv-breakdown {
+  font-size: 0.78rem;
+  color: var(--gray-600);
+  margin-top: 4px;
+}
+
+.qty-in { color: var(--green-dark); }
+.qty-out { color: #9B2C2C; }
+
+.file-btn {
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .item-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .item-row input[name="item_description"] {
+    grid-column: 1 / -1;
+  }
+}
+
+.panel-head select {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--white);
+}

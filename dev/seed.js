@@ -93,4 +93,39 @@ export async function seedDemoData(ctx) {
   await hours(court, books, 3, '09:00', '12:00', 0, 'pending');
   await hours(cleared, workshop, 10, '08:30', '12:00', 15, 'approved');
   await hours(cleared, workshop, 2, '08:30', '12:00', 15, 'pending');
+
+  // Foundation Management Portal demo data (fictional).
+  const cats = {};
+  for (const [i, c] of [['books', 'Books'], ['clothing', 'Clothing'], ['electronics', 'Electronics & technology'], ['educational_supplies', 'Educational supplies'], ['other', 'Other donated items']].entries()) {
+    cats[c[0]] = await r.insert('inventory_categories', { id: randomUUID(), slug: c[0], name: c[1], sort_order: i + 1, active: true });
+  }
+  const donor = await r.insert('donors', {
+    id: randomUUID(), donor_type: 'organization', name: 'Demo Neighborhood Book Club', contact_name: 'Demo Contact',
+    email: 'bookclub@example.org', phone: '(414) 555-0142', address_line1: '100 Demo St', address_line2: null, city: 'Milwaukee',
+    state: 'WI', postal_code: '53212', notes: null, created_by: staff.admin.id, created_at: daysAgo(30).toISOString(), updated_at: daysAgo(30).toISOString()
+  });
+  const gift = await r.insert('donations', {
+    id: randomUUID(), donor_id: donor.id, is_anonymous: false, received_on: daysAgo(20).toISOString().slice(0, 10), donation_type: 'in_kind',
+    amount: null, payment_method: null, restriction: 'unrestricted', restriction_purpose: null, description: 'Book drive drop-off',
+    estimated_value: 180, notes: null, is_historical: false, request_id: null, status: 'active', void_reason: null,
+    created_by: staff.admin.id, created_at: daysAgo(20).toISOString(), updated_at: daysAgo(20).toISOString()
+  });
+  const item = await r.insert('donation_items', { id: randomUUID(), donation_id: gift.id, category_id: cats.books.id, description: 'Picture books and early readers', quantity: 60, estimated_value: 180 });
+  const txn = (fields) => r.insert('inventory_transactions', Object.assign({
+    id: randomUUID(), donation_item_id: null, event_id: null, reason: null, notes: null, is_historical: false, request_id: null,
+    created_by: staff.admin.id, created_at: new Date().toISOString()
+  }, fields));
+  await txn({ category_id: cats.books.id, txn_type: 'received', quantity: 60, occurred_on: gift.received_on, donation_item_id: item.id });
+  await txn({ category_id: cats.clothing.id, txn_type: 'opening_balance', quantity: 40, occurred_on: daysAgo(25).toISOString().slice(0, 10), is_historical: true, notes: 'Counted at the office' });
+  const ev = await r.insert('program_events', {
+    id: randomUUID(), name: 'Demo Community Event', event_date: daysAgo(10).toISOString().slice(0, 10), participation: 'exhibited',
+    location: 'Milwaukee', public_event_id: null, notes: null, created_by: staff.admin.id, created_at: daysAgo(10).toISOString(), updated_at: daysAgo(10).toISOString()
+  });
+  await txn({ category_id: cats.books.id, txn_type: 'distributed', quantity: -25, occurred_on: ev.event_date, event_id: ev.id });
+  await r.insert('donations', {
+    id: randomUUID(), donor_id: null, is_anonymous: true, received_on: daysAgo(5).toISOString().slice(0, 10), donation_type: 'monetary',
+    amount: 50, payment_method: 'cash', restriction: 'restricted', restriction_purpose: 'Inventor Workshop materials', description: null,
+    estimated_value: null, notes: null, is_historical: false, request_id: null, status: 'active', void_reason: null,
+    created_by: staff.admin.id, created_at: daysAgo(5).toISOString(), updated_at: daysAgo(5).toISOString()
+  });
 }

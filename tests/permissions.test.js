@@ -29,7 +29,9 @@ test('letter approval needs an admin who is a designated, titled signer', () => 
 test('every admin route maps to a known permission', () => {
   for (const [resource, methods] of Object.entries(ROUTES)) {
     for (const [method, r] of Object.entries(methods)) {
-      assert.ok(PERMISSIONS[r.permission], resource + ' ' + method + ' uses unknown permission ' + r.permission);
+      for (const perm of [].concat(r.permission)) {
+        assert.ok(PERMISSIONS[perm], resource + ' ' + method + ' uses unknown permission ' + perm);
+      }
     }
   }
 });

@@ -21,9 +21,17 @@ import {
 import { purgeRecords, retentionOverview } from '../_lib/services/retention.js';
 import { dashboardSummary, listAudit } from '../_lib/services/overview.js';
 import { listTeam, setPermission } from '../_lib/services/team.js';
+import {
+  createDonation, createDonor, documentLink, exportDonationsCsv, getDonation, listDonations, listDonors,
+  updateDonation, updateDonor, uploadDocument, voidDonation
+} from '../_lib/services/donations.js';
+import {
+  createProgramEvent, exportInventoryCsv, inventoryHistory, inventorySummary, listProgramEvents,
+  recordAdjustment, recordDistribution, setOpeningBalance
+} from '../_lib/services/inventory.js';
 
-function route(permission, handle) {
-  return { permission: permission, handle: handle };
+function route(permission, handle, options) {
+  return { permission: permission, handle: handle, maxBody: options && options.maxBody };
 }
 
 export const ROUTES = {
@@ -100,6 +108,52 @@ export const ROUTES = {
   },
   'team-permission': {
     POST: route('permissions.manage', (ctx, staff, r) => setPermission(ctx, staff, r.body))
+  },
+  donors: {
+    GET: route('donations.view', (ctx, staff, r) => listDonors(ctx, staff, r.query)),
+    POST: route('donations.manage', (ctx, staff, r) => createDonor(ctx, staff, r.body)),
+    PATCH: route('donations.manage', (ctx, staff, r) => updateDonor(ctx, staff, r.query.id, r.body))
+  },
+  donations: {
+    GET: route('donations.view', (ctx, staff, r) => r.query.id
+      ? getDonation(ctx, staff, r.query.id)
+      : listDonations(ctx, staff, r.query)),
+    POST: route('donations.manage', (ctx, staff, r) => createDonation(ctx, staff, r.body)),
+    PATCH: route('donations.manage', (ctx, staff, r) => updateDonation(ctx, staff, r.query.id, r.body))
+  },
+  'void-donation': {
+    POST: route('donations.manage', (ctx, staff, r) => voidDonation(ctx, staff, r.body))
+  },
+  'donations-export': {
+    GET: route('records.export', (ctx, staff, r) => exportDonationsCsv(ctx, staff, r.query))
+  },
+  'donation-document': {
+    POST: route('donations.manage', (ctx, staff, r) => uploadDocument(ctx, staff, r.body), { maxBody: 5 * 1024 * 1024 })
+  },
+  'donation-document-link': {
+    GET: route('donations.view', (ctx, staff, r) => documentLink(ctx, staff, r.query.id))
+  },
+  inventory: {
+    GET: route('inventory.view', (ctx) => inventorySummary(ctx))
+  },
+  'inventory-history': {
+    GET: route('inventory.view', (ctx, staff, r) => inventoryHistory(ctx, staff, r.query))
+  },
+  'inventory-export': {
+    GET: route('records.export', (ctx, staff, r) => exportInventoryCsv(ctx, staff, r.query))
+  },
+  'inventory-opening': {
+    POST: route('inventory.adjust', (ctx, staff, r) => setOpeningBalance(ctx, staff, r.body))
+  },
+  'inventory-adjust': {
+    POST: route('inventory.adjust', (ctx, staff, r) => recordAdjustment(ctx, staff, r.body))
+  },
+  'inventory-distribute': {
+    POST: route('inventory.record', (ctx, staff, r) => recordDistribution(ctx, staff, r.body))
+  },
+  'program-events': {
+    GET: route('dashboard.view', (ctx) => listProgramEvents(ctx)),
+    POST: route(['inventory.record', 'impact.record'], (ctx, staff, r) => createProgramEvent(ctx, staff, r.body))
   }
 };
 
@@ -116,7 +170,7 @@ export default async function handler(req, res) {
     assertCan(staff, entry.permission);
 
     const query = Object.fromEntries(getUrl(req).searchParams);
-    const body = req.method === 'GET' ? {} : await readJson(req);
+    const body = req.method === 'GET' ? {} : await readJson(req, entry.maxBody);
     const result = await entry.handle(ctx, staff, { query: query, body: body });
 
     if (result && typeof result.csv === 'string') {

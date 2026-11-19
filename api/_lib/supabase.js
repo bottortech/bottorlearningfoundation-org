@@ -24,6 +24,7 @@ export function createSupabaseContext(env) {
   return {
     repo: createSupabaseRepo(admin),
     auth: createSupabaseAuth(admin, authClient),
+    storage: createSupabaseStorage(admin),
     config: { throttleSalt: env.THROTTLE_SALT, secureCookies: true },
     now: function () { return new Date(); }
   };
@@ -111,6 +112,35 @@ export function createSupabaseAuth(admin, authClient) {
     },
     async signOut(accessToken) {
       await admin.auth.admin.signOut(accessToken).catch(function () {});
+    }
+  };
+}
+
+// Private file storage for donation documents. The bucket is created on
+// first use and is never public; files are opened through short-lived links.
+export const DOCUMENT_BUCKET = 'donation-documents';
+
+export function createSupabaseStorage(admin) {
+  let ready = false;
+  async function ensureBucket() {
+    if (ready) return;
+    const { data } = await admin.storage.getBucket(DOCUMENT_BUCKET);
+    if (!data) {
+      const { error } = await admin.storage.createBucket(DOCUMENT_BUCKET, { public: false, fileSizeLimit: 3 * 1024 * 1024 });
+      if (error && !/already exists/i.test(error.message)) throw new DbError(error.message, 'STORAGE');
+    }
+    ready = true;
+  }
+  return {
+    async upload(path, buffer, contentType) {
+      await ensureBucket();
+      const { error } = await admin.storage.from(DOCUMENT_BUCKET).upload(path, buffer, { contentType: contentType, upsert: false });
+      if (error) throw new DbError(error.message, 'STORAGE');
+    },
+    async signedUrl(path, seconds) {
+      const { data, error } = await admin.storage.from(DOCUMENT_BUCKET).createSignedUrl(path, seconds);
+      if (error) throw new DbError(error.message, 'STORAGE');
+      return data.signedUrl;
     }
   };
 }

@@ -246,7 +246,11 @@ const VIEWS = {
   letters: viewLetters,
   retention: viewRetention,
   audit: viewAudit,
-  team: viewTeam
+  team: viewTeam,
+  donations: viewDonations,
+  donation: viewDonation,
+  donors: viewDonors,
+  inventory: viewInventory
 };
 
 function route() {
@@ -254,7 +258,8 @@ function route() {
   const parts = location.hash.replace(/^#\/?/, '').split('/');
   const name = VIEWS[parts[0]] ? parts[0] : 'overview';
   document.querySelectorAll('.admin-nav a').forEach((a) => {
-    const active = a.dataset.view === name || (name === 'volunteer' && a.dataset.view === 'volunteers');
+    const active = a.dataset.view === name || (name === 'volunteer' && a.dataset.view === 'volunteers') ||
+      ((name === 'donation' || name === 'donors') && a.dataset.view === 'donations');
     a.classList.toggle('active', active);
     if (active) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
@@ -264,6 +269,23 @@ function route() {
 window.addEventListener('hashchange', route);
 
 /* ---------- Overview ---------- */
+
+function foundationOverview(f) {
+  if (f.donations_this_year === undefined && f.inventory_on_hand === undefined) return '';
+  const card = (label, value, href, tone) => value === undefined ? '' :
+    '<a class="stat-card stat-' + tone + '" href="' + href + '"><span class="stat-value">' + esc(value) + '</span><span class="stat-label">' + esc(label) + '</span></a>';
+  return '<h2 class="overview-subhead">Donations &amp; inventory</h2><div class="stat-grid">' +
+    card('Donations this year', f.donations_this_year, '#/donations', 'green') +
+    card('Money received this year', f.monetary_this_year === undefined ? undefined : fmtMoney(f.monetary_this_year), '#/donations', 'green') +
+    card('Items donated this year', f.in_kind_items_this_year, '#/donations', 'orange') +
+    card('Items on hand', f.inventory_on_hand, '#/inventory', 'blue') +
+    card('Items distributed (all time)', f.items_distributed, '#/inventory', 'gray') +
+    '</div>' + (f.recent_donations ? '<section class="panel"><h2>Recent donations</h2>' + (f.recent_donations.length
+      ? '<ul class="attention-list recent-list">' + f.recent_donations.map((d) => '<li><a href="#/donation/' + esc(d.id) + '">' + fmtDate(d.received_on) + '</a><span>' +
+        esc(d.donor_name || 'Anonymous') + (d.is_anonymous && d.donor_name ? ' (anonymous)' : '') + ' · ' +
+        (d.donation_type === 'monetary' ? (d.amount !== undefined ? fmtMoney(d.amount) : 'Money') : esc(d.item_summary)) + '</span></li>').join('') + '</ul>'
+      : emptyState('No donations recorded yet.')) + '</section>' : '');
+}
 
 async function viewOverview() {
   loading('Loading overview…');
@@ -280,7 +302,7 @@ async function viewOverview() {
       card('Active volunteers', c.active_volunteers, '#/volunteers', 'blue') +
       card('Hours awaiting verification', c.pending_hours, '#/hours', 'green') +
       card('Draft letters', c.draft_letters, '#/letters', 'gray') +
-    '</div>' +
+    '</div>' + foundationOverview(res.data.foundation || {}) +
     (canDo('volunteers.manage')
       ? '<section class="panel"><h2>Needs attention</h2>' + (attention.length
         ? '<ul class="attention-list">' + attention.map((a) =>
@@ -840,6 +862,390 @@ async function viewAudit() {
         '<td>' + esc(r.entity_type) + (r.entity_id ? ' <span class="muted-text small">' + esc(String(r.entity_id).slice(0, 8)) + '</span>' : '') + '</td>' +
         '<td class="wrap small">' + esc(Object.keys(r.details || {}).length ? JSON.stringify(r.details) : '') + '</td></tr>').join('') +
       '</tbody></table></div>' : emptyState('No events yet.'));
+}
+
+/* ---------- Donations ---------- */
+
+const PAYMENT_LABELS = { cash: 'Cash', check: 'Check', card: 'Card', givebutter: 'Givebutter', bank_transfer: 'Bank transfer', other: 'Other' };
+const TXN_LABELS = { opening_balance: 'Opening balance', received: 'Received', distributed: 'Distributed', adjustment: 'Correction' };
+const PARTICIPATION_LABELS = { exhibited: 'Exhibited', hosted: 'Hosted', attended: 'Attended', partnered: 'Partnered' };
+
+function fmtMoney(n) {
+  return n == null ? '—' : Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+function today() {
+  return todayInOrgTimeZone();
+}
+
+function newRequestId() {
+  return crypto.randomUUID();
+}
+
+let inventoryCategories = [];
+
+async function loadCategories() {
+  if (inventoryCategories.length) return inventoryCategories;
+  const res = await api('admin/inventory');
+  if (res.ok) inventoryCategories = res.data.categories;
+  return inventoryCategories;
+}
+
+function giftCell(d) {
+  if (d.donation_type === 'monetary') return 'amount' in d ? fmtMoney(d.amount) : '<span class="muted-text">Money (amount hidden)</span>';
+  return esc(d.item_summary || '—');
+}
+
+async function viewDonations() {
+  const year = sessionStorage.getItem('don.year') || String(new Date().getFullYear());
+  const type = sessionStorage.getItem('don.type') || '';
+  const years = { '': 'All years' };
+  for (let y = new Date().getFullYear(); y >= 2024; y--) years[String(y)] = String(y);
+  main.innerHTML = '<div class="view-header"><h1>Donations</h1><div class="action-row">' +
+    '<a class="btn btn-secondary btn-sm" href="#/donors">Donors</a>' +
+    (canDo('records.export') ? '<a class="btn btn-secondary btn-sm" download href="/api/admin/donations-export' + (year ? '?from=' + year + '-01-01&to=' + year + '-12-31' : '') + '">Export CSV</a>' : '') +
+    (canDo('donations.manage') ? '<button type="button" class="btn btn-primary btn-sm" id="new-donation">Record donation</button>' : '') +
+    '</div></div>' +
+    '<div class="filter-bar"><label class="sr-only" for="don-year">Year</label><select id="don-year">' + selectOptions(years, year) + '</select>' +
+    '<label class="sr-only" for="don-type">Type</label><select id="don-type">' + selectOptions({ '': 'Money and items', monetary: 'Money', in_kind: 'Items (in-kind)' }, type) + '</select></div>' +
+    '<div id="don-list"><div class="state-box" role="status"><span class="spinner" aria-hidden="true"></span> Loading donations…</div></div>';
+  document.getElementById('don-year').addEventListener('change', (e) => { sessionStorage.setItem('don.year', e.target.value); viewDonations(); });
+  document.getElementById('don-type').addEventListener('change', (e) => { sessionStorage.setItem('don.type', e.target.value); viewDonations(); });
+  const btn = document.getElementById('new-donation');
+  if (btn) btn.addEventListener('click', () => openDonationForm(null, viewDonations));
+
+  const params = new URLSearchParams();
+  if (year) { params.set('from', year + '-01-01'); params.set('to', year + '-12-31'); }
+  if (type) params.set('donation_type', type);
+  const res = await api('admin/donations?' + params);
+  if (!res.ok) return errorState(res.data.error, viewDonations);
+  const rows = res.data.donations;
+  document.getElementById('don-list').innerHTML = rows.length
+    ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Received</th><th>Donor</th><th>Gift</th><th>Restriction</th><th>Status</th><th>Thank-you</th></tr></thead><tbody>' +
+      rows.map((d) => '<tr' + (d.status === 'void' ? ' class="row-muted"' : '') + '><td class="nowrap"><a href="#/donation/' + esc(d.id) + '">' + fmtDate(d.received_on) + '</a>' +
+        (d.is_historical ? '<div class="muted-text small">Historical entry</div>' : '') + '</td>' +
+        '<td>' + (d.donor_name ? esc(d.donor_name) : '<span class="muted-text">No donor record</span>') + (d.is_anonymous ? ' <span class="badge badge-muted">Anonymous</span>' : '') + '</td>' +
+        '<td>' + giftCell(d) + '</td>' +
+        '<td>' + (d.restriction === 'restricted' ? '<span class="badge badge-warn" title="' + esc(d.restriction_purpose) + '">Restricted</span>' : '<span class="muted-text">Unrestricted</span>') + '</td>' +
+        '<td>' + (d.status === 'void' ? '<span class="badge badge-muted">Void</span>' : '<span class="badge badge-ok">Recorded</span>') + '</td>' +
+        '<td>' + (d.acknowledgment_status ? esc(d.acknowledgment_status) : '<span class="muted-text">Not started</span>') + '</td></tr>').join('') +
+      '</tbody></table></div>'
+    : emptyState(year ? 'No donations recorded for ' + year + ' yet.' : 'No donations recorded yet. Use “Record donation” to add one, including past gifts.');
+}
+
+async function openDonationForm(existing, reload) {
+  const [cats, donorsRes] = await Promise.all([loadCategories(), api('admin/donors')]);
+  if (!donorsRes.ok) return toast(donorsRes.data.error, 'bad');
+  const donors = donorsRes.data.donors;
+  const d = existing || {};
+  const editing = !!existing;
+  const requestId = newRequestId();
+  const catOptions = cats.map((c) => '<option value="' + esc(c.category_id) + '">' + esc(c.name) + '</option>').join('');
+  const itemRow = () => '<div class="item-row"><select name="item_category" aria-label="Category">' + catOptions + '</select>' +
+    '<input type="text" name="item_description" placeholder="Description (e.g. picture books)" maxlength="300" aria-label="Item description">' +
+    '<input type="number" name="item_quantity" min="1" step="1" placeholder="Qty" aria-label="Quantity">' +
+    '<input type="number" name="item_value" min="0" step="0.01" placeholder="Est. value $" aria-label="Estimated value (optional)">' +
+    '<button type="button" class="btn-link" data-remove-item aria-label="Remove item">×</button></div>';
+  const showAmounts = canDo('donors.view_contact');
+
+  openModal({
+    title: editing ? 'Edit donation' : 'Record donation',
+    submitLabel: editing ? 'Save changes' : 'Save donation',
+    body:
+      '<label for="dn-donor">Donor</label><select id="dn-donor" name="donor_id"><option value="">— No donor record —</option>' +
+      donors.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === d.donor_id ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select>' +
+      '<p class="field-hint">Not listed? Add them first under <a href="#/donors">Donors</a>. Anonymous gifts don’t need a donor record.</p>' +
+      '<label class="check-label"><input type="checkbox" name="is_anonymous"' + (d.is_anonymous ? ' checked' : '') + '> <span>Anonymous: never credit this donor publicly</span></label>' +
+      '<div class="m-grid"><div><label for="dn-date">Date received *</label><input type="date" id="dn-date" name="received_on" max="' + today() + '" value="' + esc(d.received_on || today()) + '" required></div>' +
+      '<div><label for="dn-type">Type *</label><select id="dn-type" name="donation_type"' + (editing ? ' disabled' : '') + '>' +
+      selectOptions({ in_kind: 'Items (in-kind)', monetary: 'Money' }, d.donation_type || 'in_kind') + '</select></div></div>' +
+      '<label class="check-label"><input type="checkbox" name="is_historical"' + (d.is_historical ? ' checked' : '') + '> <span>Historical entry (recorded after the fact)</span></label>' +
+      '<div id="dn-money"><div class="m-grid"><div><label for="dn-amount">Amount *</label><input type="number" id="dn-amount" name="amount" min="0.01" step="0.01" value="' + esc(d.amount == null ? '' : d.amount) + '"></div>' +
+      '<div><label for="dn-method">Received by *</label><select id="dn-method" name="payment_method"><option value="">Choose…</option>' + selectOptions(PAYMENT_LABELS, d.payment_method) + '</select></div></div></div>' +
+      '<div id="dn-items">' + (editing ? '<p class="field-hint">Items can’t be changed after saving. To fix them, void this donation and re-enter it, or record an inventory correction.</p>'
+        : '<label>Items *</label><div id="item-rows">' + itemRow() + '</div><button type="button" class="btn-link" id="add-item">+ Add another item</button>' +
+        (showAmounts ? '<label for="dn-ev">Estimated total value (internal only)</label><input type="number" id="dn-ev" name="estimated_value" min="0" step="0.01">' +
+          '<p class="field-hint">Estimates are for your records. They’re never printed on thank-you letters.</p>' : '')) + '</div>' +
+      '<label for="dn-restr">Restriction</label><select id="dn-restr" name="restriction">' + selectOptions({ unrestricted: 'Unrestricted', restricted: 'Restricted by the donor' }, d.restriction || 'unrestricted') + '</select>' +
+      '<div id="dn-purpose"><label for="dn-purp">How the gift is restricted *</label><input type="text" id="dn-purp" name="restriction_purpose" maxlength="500" value="' + esc(d.restriction_purpose || '') + '"></div>' +
+      '<label for="dn-desc">Description</label><input type="text" id="dn-desc" name="description" maxlength="1000" value="' + esc(d.description || '') + '">' +
+      '<label for="dn-notes">Notes (internal)</label><textarea id="dn-notes" name="notes" rows="2" maxlength="2000">' + esc(d.notes || '') + '</textarea>' +
+      '<div id="dn-dup" hidden><label class="check-label"><input type="checkbox" name="confirm_duplicate"> <span>This is a separate gift, not a duplicate</span></label></div>',
+    onOpen: (body) => {
+      const type = body.querySelector('#dn-type');
+      const sync = () => {
+        const money = type.value === 'monetary';
+        body.querySelector('#dn-money').hidden = !money || (editing && !showAmounts);
+        body.querySelector('#dn-items').hidden = money;
+        body.querySelector('#dn-purpose').hidden = body.querySelector('#dn-restr').value !== 'restricted';
+      };
+      type.addEventListener('change', sync);
+      body.querySelector('#dn-restr').addEventListener('change', sync);
+      const add = body.querySelector('#add-item');
+      if (add) add.addEventListener('click', () => body.querySelector('#item-rows').insertAdjacentHTML('beforeend', itemRow()));
+      body.addEventListener('click', (e) => {
+        if (e.target.matches('[data-remove-item]') && body.querySelectorAll('.item-row').length > 1) e.target.closest('.item-row').remove();
+      });
+      sync();
+    },
+    onSubmit: async (f) => {
+      const body = document.getElementById('modal-body');
+      const payload = {
+        donor_id: f.donor_id || null, is_anonymous: f.is_anonymous, received_on: f.received_on, is_historical: f.is_historical,
+        restriction: f.restriction, restriction_purpose: f.restriction_purpose, description: f.description, notes: f.notes
+      };
+      if (!editing) {
+        payload.donation_type = f.donation_type;
+        payload.request_id = requestId;
+        payload.confirm_duplicate = f.confirm_duplicate === true;
+      }
+      const type = editing ? d.donation_type : f.donation_type;
+      if (type === 'monetary' && (!editing || showAmounts)) { payload.amount = f.amount; payload.payment_method = f.payment_method; }
+      if (type === 'in_kind' && !editing) {
+        payload.items = Array.from(body.querySelectorAll('.item-row')).map((row) => ({
+          category_id: row.querySelector('[name=item_category]').value,
+          description: row.querySelector('[name=item_description]').value,
+          quantity: Number(row.querySelector('[name=item_quantity]').value),
+          estimated_value: row.querySelector('[name=item_value]').value
+        }));
+        if (showAmounts) payload.estimated_value = f.estimated_value;
+      }
+      const res = editing
+        ? await api('admin/donations?id=' + encodeURIComponent(d.id), { method: 'PATCH', body: payload })
+        : await api('admin/donations', { method: 'POST', body: payload });
+      if (res.status === 409 && res.data.possible_duplicate) body.querySelector('#dn-dup').hidden = false;
+      if (res.ok) {
+        inventoryCategories = [];
+        toast(editing ? 'Donation updated.' : res.data.repeated ? 'Already saved.' : 'Donation recorded.');
+        reload();
+      }
+      return res;
+    }
+  });
+}
+
+async function viewDonation(id) {
+  loading('Loading donation…');
+  const res = await api('admin/donations?id=' + encodeURIComponent(id || ''));
+  if (!res.ok) return errorState(res.data.error, () => viewDonation(id));
+  const { donation: d, donor, items, documents, acknowledgments } = res.data;
+  const manage = canDo('donations.manage') && d.status !== 'void';
+  const kv = (pairs) => '<dl class="kv">' + pairs.filter(Boolean).map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + v + '</dd>').join('') + '</dl>';
+
+  main.innerHTML = '<p class="breadcrumb"><a href="#/donations">← Donations</a></p>' +
+    '<div class="view-header"><div><h1>' + (d.donation_type === 'monetary' ? 'Monetary gift' : 'In-kind gift') + ' · ' + fmtDate(d.received_on) + '</h1>' +
+    '<p class="header-badges">' + (d.status === 'void' ? '<span class="badge badge-muted">Void</span>' : '<span class="badge badge-ok">Recorded</span>') +
+    (d.is_anonymous ? ' <span class="badge badge-muted">Anonymous</span>' : '') + (d.is_historical ? ' <span class="badge badge-blue">Historical entry</span>' : '') +
+    (d.restriction === 'restricted' ? ' <span class="badge badge-warn">Restricted</span>' : '') + '</p></div>' +
+    '<div class="action-row">' + (manage ? '<button type="button" class="btn btn-secondary btn-sm" id="edit-don">Edit</button><button type="button" class="btn btn-secondary btn-sm" id="void-don">Void</button>' : '') + '</div></div>' +
+    '<div class="detail-grid">' +
+    '<section class="panel"><h2>Gift</h2>' + kv([
+      ['Received', fmtDate(d.received_on)],
+      d.donation_type === 'monetary' ? ['Amount', 'amount' in d ? fmtMoney(d.amount) + (d.payment_method ? ' · ' + esc(PAYMENT_LABELS[d.payment_method]) : '') : '<span class="muted-text">Hidden</span>'] : null,
+      d.donation_type === 'in_kind' && 'estimated_value' in d ? ['Estimated value', fmtMoney(d.estimated_value) + ' <span class="muted-text small">(internal only)</span>'] : null,
+      ['Restriction', d.restriction === 'restricted' ? 'Restricted: ' + esc(d.restriction_purpose) : 'Unrestricted'],
+      d.description ? ['Description', esc(d.description)] : null,
+      d.notes ? ['Notes', esc(d.notes)] : null,
+      d.status === 'void' ? ['Void reason', esc(d.void_reason)] : null,
+      ['Recorded', fmtDateTime(d.created_at)]
+    ]) + '</section>' +
+    '<section class="panel"><h2>Donor</h2>' + (donor ? kv([
+      ['Name', esc(donor.name) + ' <span class="muted-text small">(' + (donor.donor_type === 'organization' ? 'organization' : 'individual') + ')</span>'],
+      'email' in donor ? ['Email', esc(donor.email || '—')] : null,
+      'phone' in donor ? ['Phone', esc(donor.phone || '—')] : null,
+      'address_line1' in donor ? ['Address', esc([donor.address_line1, donor.address_line2, [donor.city, donor.state, donor.postal_code].filter(Boolean).join(' ')].filter(Boolean).join(', ') || '—')] : null
+    ]) : emptyState('No donor record (anonymous gift).')) + '</section>' +
+    (items.length ? '<section class="panel panel-wide"><h2>Items</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Category</th><th>Description</th><th>Quantity</th>' +
+      (items.some((i) => 'estimated_value' in i) ? '<th>Est. value</th>' : '') + '</tr></thead><tbody>' +
+      items.map((i) => '<tr><td>' + esc(i.category_name) + '</td><td>' + esc(i.description) + '</td><td>' + esc(i.quantity) + '</td>' +
+        ('estimated_value' in i ? '<td>' + fmtMoney(i.estimated_value) + '</td>' : '') + '</tr>').join('') + '</tbody></table></div>' +
+      '<p class="field-hint">These items were added to inventory when the donation was recorded.</p></section>' : '') +
+    '<section class="panel panel-wide"><div class="panel-head"><h2>Supporting documents</h2>' +
+    (manage ? '<label class="btn btn-secondary btn-sm file-btn">Upload file<input type="file" id="doc-file" accept="application/pdf,image/jpeg,image/png,image/webp" hidden></label>' : '') + '</div>' +
+    (documents.length ? '<ul class="letter-list">' + documents.map((doc) => '<li><button type="button" class="btn-link" data-doc="' + esc(doc.id) + '">' + esc(doc.file_name) + '</button> <span class="muted-text small">' +
+      Math.ceil(doc.size_bytes / 1024) + ' KB · ' + fmtDateTime(doc.uploaded_at) + '</span></li>').join('') + '</ul>' : emptyState('No documents yet. PDF, JPG, PNG, or WebP, up to 3 MB.')) + '</section>' +
+    '<section class="panel panel-wide"><h2>Thank-you letters</h2>' + (acknowledgments.length
+      ? '<ul class="letter-list">' + acknowledgments.map((a) => '<li>' + esc(a.letter_number) + ' · ' + esc(a.status) + (a.sent_on ? ' · sent ' + fmtDate(a.sent_on) : '') + '</li>').join('') + '</ul>'
+      : emptyState('No thank-you letter yet. Letters are added in the next phase.')) + '</section>' +
+    '</div>';
+
+  const reload = () => viewDonation(id);
+  const edit = document.getElementById('edit-don');
+  if (edit) edit.addEventListener('click', () => openDonationForm(d, reload));
+  const voidBtn = document.getElementById('void-don');
+  if (voidBtn) voidBtn.addEventListener('click', () => openModal({
+    title: 'Void this donation?',
+    body: '<p>The record is kept but marked void. Any items it added to inventory are removed with a correction entry, so the history stays complete.</p>' +
+      '<label for="vd-r">Reason *</label><textarea id="vd-r" name="reason" rows="3" required></textarea>',
+    submitLabel: 'Void donation', danger: true,
+    onSubmit: (f) => api('admin/void-donation', { method: 'POST', body: { id: d.id, reason: f.reason } }).then((r) => { if (r.ok) { inventoryCategories = []; toast('Donation voided.'); reload(); } return r; })
+  }));
+  main.querySelectorAll('[data-doc]').forEach((b) => b.addEventListener('click', async () => {
+    const r = await api('admin/donation-document-link?id=' + encodeURIComponent(b.dataset.doc));
+    if (r.ok) window.open(r.data.url, '_blank', 'noopener'); else toast(r.data.error, 'bad');
+  }));
+  const file = document.getElementById('doc-file');
+  if (file) file.addEventListener('change', () => {
+    const f = file.files[0];
+    if (!f) return;
+    if (f.size > 3 * 1024 * 1024) return toast('Files must be 3 MB or smaller.', 'bad');
+    const reader = new FileReader();
+    reader.onload = async () => {
+      toast('Uploading…', 'warn');
+      const data = String(reader.result).split(',')[1];
+      const r = await api('admin/donation-document', { method: 'POST', body: { donation_id: d.id, file_name: f.name, content_type: f.type, data: data } });
+      if (r.ok) { toast('Document uploaded.'); reload(); } else toast(r.data.error + (r.data.errors ? ' ' + Object.values(r.data.errors).join(' ') : ''), 'bad');
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+async function viewDonors() {
+  loading('Loading donors…');
+  const res = await api('admin/donors');
+  if (!res.ok) return errorState(res.data.error, viewDonors);
+  const rows = res.data.donors;
+  const contact = canDo('donors.view_contact');
+  main.innerHTML = '<p class="breadcrumb"><a href="#/donations">← Donations</a></p><div class="view-header"><h1>Donors</h1>' +
+    (canDo('donations.manage') ? '<button type="button" class="btn btn-primary btn-sm" id="new-donor">Add donor</button>' : '') + '</div>' +
+    (rows.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Type</th>' + (contact ? '<th>Email</th><th>Phone</th>' : '') +
+      '<th>Gifts</th><th>Last gift</th><th></th></tr></thead><tbody>' +
+      rows.map((x) => '<tr><td><a href="#/donations" data-donor-filter="' + esc(x.id) + '">' + esc(x.name) + '</a></td><td>' + (x.donor_type === 'organization' ? 'Organization' : 'Individual') + '</td>' +
+        (contact ? '<td>' + esc(x.email || '—') + '</td><td>' + esc(x.phone || '—') + '</td>' : '') +
+        '<td>' + esc(x.donation_count) + '</td><td>' + fmtDate(x.last_donation_on) + '</td>' +
+        '<td>' + (contact && canDo('donations.manage') ? '<button type="button" class="btn-link" data-edit-donor="' + esc(x.id) + '">Edit</button>' : '') + '</td></tr>').join('') +
+      '</tbody></table></div>' : emptyState('No donors yet. Add a donor before recording their gift.'));
+
+  const form = (x) => '<label for="dr-type">Type</label><select id="dr-type" name="donor_type">' + selectOptions({ individual: 'Individual', organization: 'Organization or business' }, x.donor_type || 'individual') + '</select>' +
+    '<label for="dr-name">Name *</label><input type="text" id="dr-name" name="name" maxlength="160" required value="' + esc(x.name || '') + '">' +
+    '<label for="dr-cn">Contact person (organizations)</label><input type="text" id="dr-cn" name="contact_name" maxlength="120" value="' + esc(x.contact_name || '') + '">' +
+    '<div class="m-grid"><div><label for="dr-email">Email</label><input type="email" id="dr-email" name="email" value="' + esc(x.email || '') + '"></div>' +
+    '<div><label for="dr-phone">Phone</label><input type="tel" id="dr-phone" name="phone" value="' + esc(x.phone || '') + '"></div></div>' +
+    '<label for="dr-a1">Mailing address</label><input type="text" id="dr-a1" name="address_line1" maxlength="160" placeholder="Street" value="' + esc(x.address_line1 || '') + '">' +
+    '<input type="text" name="address_line2" maxlength="160" placeholder="Apt, suite (optional)" aria-label="Address line 2" value="' + esc(x.address_line2 || '') + '">' +
+    '<div class="m-grid"><div><input type="text" name="city" maxlength="80" placeholder="City" aria-label="City" value="' + esc(x.city || '') + '"></div>' +
+    '<div class="m-grid"><input type="text" name="state" maxlength="40" placeholder="State" aria-label="State" value="' + esc(x.state || '') + '"><input type="text" name="postal_code" maxlength="20" placeholder="ZIP" aria-label="ZIP code" value="' + esc(x.postal_code || '') + '"></div></div>' +
+    '<label for="dr-notes">Notes (internal)</label><textarea id="dr-notes" name="notes" rows="2" maxlength="2000">' + esc(x.notes || '') + '</textarea>';
+
+  const add = document.getElementById('new-donor');
+  if (add) add.addEventListener('click', () => openModal({
+    title: 'Add donor', body: form({}), submitLabel: 'Add donor',
+    onSubmit: (f) => api('admin/donors', { method: 'POST', body: f }).then((r) => { if (r.ok) { toast('Donor added.'); viewDonors(); } return r; })
+  }));
+  main.querySelectorAll('[data-edit-donor]').forEach((b) => b.addEventListener('click', () => {
+    const x = rows.find((r) => r.id === b.dataset.editDonor);
+    openModal({
+      title: 'Edit donor', body: form(x),
+      onSubmit: (f) => api('admin/donors?id=' + encodeURIComponent(x.id), { method: 'PATCH', body: f }).then((r) => { if (r.ok) { toast('Donor updated.'); viewDonors(); } return r; })
+    });
+  }));
+}
+
+/* ---------- Inventory ---------- */
+
+async function viewInventory() {
+  loading('Loading inventory…');
+  const cat = sessionStorage.getItem('inv.cat') || '';
+  const [sumRes, histRes] = await Promise.all([
+    api('admin/inventory'),
+    api('admin/inventory-history' + (cat ? '?category_id=' + encodeURIComponent(cat) : ''))
+  ]);
+  if (!sumRes.ok) return errorState(sumRes.data.error, viewInventory);
+  if (!histRes.ok) return errorState(histRes.data.error, viewInventory);
+  const cats = sumRes.data.categories;
+  inventoryCategories = cats;
+  const txns = histRes.data.transactions;
+
+  main.innerHTML = '<div class="view-header"><h1>Inventory</h1><div class="action-row">' +
+    (canDo('records.export') ? '<a class="btn btn-secondary btn-sm" download href="/api/admin/inventory-export' + (cat ? '?category_id=' + encodeURIComponent(cat) : '') + '">Export CSV</a>' : '') +
+    (canDo('inventory.adjust') ? '<button type="button" class="btn btn-secondary btn-sm" id="inv-open">Opening balance</button><button type="button" class="btn btn-secondary btn-sm" id="inv-adj">Correct a count</button>' : '') +
+    (canDo('inventory.record') ? '<button type="button" class="btn btn-primary btn-sm" id="inv-dist">Record distribution</button>' : '') +
+    '</div></div>' +
+    '<p class="field-hint">Donated items are added automatically when you record a donation. Stock can never go below zero.</p>' +
+    '<div class="stat-grid inv-grid">' + cats.map((c) => '<div class="stat-card stat-blue inv-card"><span class="stat-value">' + esc(c.on_hand) + '</span>' +
+      '<span class="stat-label">' + esc(c.name) + ' on hand</span><span class="inv-breakdown">' +
+      (c.has_opening_balance ? c.opening_balance + ' opening · ' : '') + c.received + ' received · ' + c.distributed + ' distributed' +
+      (c.adjustments ? ' · ' + (c.adjustments > 0 ? '+' : '') + c.adjustments + ' corrected' : '') + '</span></div>').join('') + '</div>' +
+    '<section class="panel"><div class="panel-head"><h2>History</h2><label class="sr-only" for="inv-cat">Category</label><select id="inv-cat">' +
+    '<option value="">All categories</option>' + cats.map((c) => '<option value="' + esc(c.category_id) + '"' + (c.category_id === cat ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select></div>' +
+    (txns.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Date</th><th>Category</th><th>Type</th><th>Qty</th><th>Details</th><th>Recorded by</th></tr></thead><tbody>' +
+      txns.map((t) => '<tr><td class="nowrap">' + fmtDate(t.occurred_on) + (t.is_historical ? '<div class="muted-text small">Historical</div>' : '') + '</td>' +
+        '<td>' + esc(t.category_name) + '</td><td>' + esc(TXN_LABELS[t.txn_type] || t.txn_type) + '</td>' +
+        '<td class="nowrap"><strong class="' + (t.quantity < 0 ? 'qty-out' : 'qty-in') + '">' + (t.quantity > 0 ? '+' : '') + esc(t.quantity) + '</strong></td>' +
+        '<td class="wrap">' + [t.item_description ? (t.donation_id ? '<a href="#/donation/' + esc(t.donation_id) + '">' + esc(t.item_description) + '</a>' : esc(t.item_description)) : '',
+          t.event_name ? 'Event: ' + esc(t.event_name) : '', t.reason ? 'Reason: ' + esc(t.reason) : '', t.notes ? esc(t.notes) : ''].filter(Boolean).join('<br>') + '</td>' +
+        '<td class="small">' + esc(t.recorded_by_name) + '</td></tr>').join('') + '</tbody></table></div>'
+      : emptyState('No inventory activity yet. Set opening balances for items you already have, or record a donation.')) + '</section>';
+
+  document.getElementById('inv-cat').addEventListener('change', (e) => { sessionStorage.setItem('inv.cat', e.target.value); viewInventory(); });
+  const catSelect = (name) => '<select id="iv-cat" name="' + name + '">' + cats.map((c) => '<option value="' + esc(c.category_id) + '">' + esc(c.name) + ' (' + c.on_hand + ' on hand)</option>').join('') + '</select>';
+  const done = (msg) => (r) => { if (r.ok) { toast(msg); viewInventory(); } return r; };
+
+  const dist = document.getElementById('inv-dist');
+  if (dist) dist.addEventListener('click', async () => {
+    const evRes = await api('admin/program-events');
+    const events = evRes.ok ? evRes.data.events : [];
+    const requestId = newRequestId();
+    openModal({
+      title: 'Record distribution', submitLabel: 'Record distribution',
+      body: '<label for="iv-cat">Category *</label>' + catSelect('category_id') +
+        '<div class="m-grid"><div><label for="iv-q">Quantity given out *</label><input type="number" id="iv-q" name="quantity" min="1" step="1" required></div>' +
+        '<div><label for="iv-d">Date *</label><input type="date" id="iv-d" name="occurred_on" max="' + today() + '" value="' + today() + '" required></div></div>' +
+        '<label for="iv-ev">Event</label><select id="iv-ev" name="event_id"><option value="">— Not at an event —</option>' +
+        events.map((e) => '<option value="' + esc(e.id) + '">' + esc(e.name) + ' · ' + fmtDate(e.event_date) + '</option>').join('') + '<option value="__new">+ Add a new event…</option></select>' +
+        '<div id="iv-new" hidden class="m-grid"><div><label for="iv-en">Event name *</label><input type="text" id="iv-en" name="event_name" maxlength="200"></div>' +
+        '<div><label for="iv-ed">Event date *</label><input type="date" id="iv-ed" name="event_date"></div>' +
+        '<div><label for="iv-ep">Our role</label><select id="iv-ep" name="participation">' + selectOptions(PARTICIPATION_LABELS, 'exhibited') + '</select></div>' +
+        '<div><label for="iv-el">Location</label><input type="text" id="iv-el" name="event_location" maxlength="300"></div></div>' +
+        '<label class="check-label"><input type="checkbox" name="is_historical"> <span>Historical entry (recorded after the fact)</span></label>' +
+        '<label for="iv-n">Notes</label><textarea id="iv-n" name="notes" rows="2" maxlength="1000"></textarea>',
+      onOpen: (body) => {
+        const sel = body.querySelector('#iv-ev');
+        sel.addEventListener('change', () => { body.querySelector('#iv-new').hidden = sel.value !== '__new'; });
+      },
+      onSubmit: async (f) => {
+        let eventId = f.event_id || null;
+        if (eventId === '__new') {
+          const ev = await api('admin/program-events', { method: 'POST', body: { name: f.event_name, event_date: f.event_date, participation: f.participation, location: f.event_location } });
+          if (!ev.ok) return ev;
+          eventId = ev.data.event.id;
+        }
+        return api('admin/inventory-distribute', { method: 'POST', body: {
+          category_id: f.category_id, quantity: Number(f.quantity), occurred_on: f.occurred_on, event_id: eventId,
+          notes: f.notes, is_historical: f.is_historical, request_id: requestId
+        } }).then(done('Distribution recorded.'));
+      }
+    });
+  });
+
+  const opening = document.getElementById('inv-open');
+  if (opening) opening.addEventListener('click', () => {
+    const open = cats.filter((c) => !c.has_opening_balance);
+    if (!open.length) return toast('Every category already has an opening balance. Use “Correct a count” instead.', 'warn');
+    openModal({
+      title: 'Set opening balance', submitLabel: 'Save opening balance',
+      body: '<p>Use this once per category for items you already had before this system, so stock starts at the right number.</p>' +
+        '<label for="iv-cat">Category *</label><select id="iv-cat" name="category_id">' + open.map((c) => '<option value="' + esc(c.category_id) + '">' + esc(c.name) + '</option>').join('') + '</select>' +
+        '<div class="m-grid"><div><label for="iv-q">Quantity on hand *</label><input type="number" id="iv-q" name="quantity" min="1" step="1" required></div>' +
+        '<div><label for="iv-d">As of *</label><input type="date" id="iv-d" name="occurred_on" max="' + today() + '" value="' + today() + '" required></div></div>' +
+        '<label for="iv-n">Notes</label><textarea id="iv-n" name="notes" rows="2" maxlength="1000" placeholder="e.g. Counted at the office"></textarea>',
+      onSubmit: (f) => api('admin/inventory-opening', { method: 'POST', body: { category_id: f.category_id, quantity: Number(f.quantity), occurred_on: f.occurred_on, notes: f.notes } }).then(done('Opening balance saved.'))
+    });
+  });
+
+  const adj = document.getElementById('inv-adj');
+  if (adj) adj.addEventListener('click', () => {
+    const requestId = newRequestId();
+    openModal({
+      title: 'Correct a count', submitLabel: 'Save correction',
+      body: '<p>Use this when a physical count doesn’t match. Enter a positive number to add items or a negative number to remove them.</p>' +
+        '<label for="iv-cat">Category *</label>' + catSelect('category_id') +
+        '<div class="m-grid"><div><label for="iv-q">Change (+ or −) *</label><input type="number" id="iv-q" name="quantity" step="1" required></div>' +
+        '<div><label for="iv-d">Date *</label><input type="date" id="iv-d" name="occurred_on" max="' + today() + '" value="' + today() + '" required></div></div>' +
+        '<label for="iv-r">Reason *</label><textarea id="iv-r" name="reason" rows="2" maxlength="1000" required placeholder="e.g. Recount found 3 damaged books"></textarea>',
+      onSubmit: (f) => api('admin/inventory-adjust', { method: 'POST', body: { category_id: f.category_id, quantity: Number(f.quantity), occurred_on: f.occurred_on, reason: f.reason, request_id: requestId } }).then(done('Correction saved.'))
+    });
+  });
 }
 
 /* ---------- Team & Permissions ---------- */

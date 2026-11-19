@@ -53,6 +53,12 @@ http.createServer(async (req, res) => {
     if (pathname === '/api/apply') return await applyHandler(req, res);
     if (pathname.startsWith('/api/auth/')) return await authHandler(req, res);
     if (pathname.startsWith('/api/admin/')) return await adminHandler(req, res);
+    if (pathname.startsWith('/__dev-storage/')) {
+      const file = ctx.storage.files.get(decodeURIComponent(pathname.slice('/__dev-storage/'.length)));
+      if (!file) { res.statusCode = 404; return res.end('Not found'); }
+      res.setHeader('Content-Type', file.contentType);
+      return res.end(file.buffer);
+    }
     if (pathname === '/_vercel/insights/script.js') { res.setHeader('Content-Type', 'text/javascript'); return res.end(''); }
     await serveStatic(req, res, pathname === '/' ? '/index.html' : decodeURIComponent(pathname));
   } catch (err) {
