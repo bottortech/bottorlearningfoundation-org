@@ -22,6 +22,7 @@ import { purgeRecords, retentionOverview } from '../_lib/services/retention.js';
 import { dashboardSummary, listAudit } from '../_lib/services/overview.js';
 import { listTeam, setPermission } from '../_lib/services/team.js';
 import { publicationOverview, publishImpact } from '../_lib/services/publication.js';
+import { exportBackup } from '../_lib/services/backup.js';
 import {
   createImpactEvent, eventReport, exportImpactCsv, impactReport, impactTrend, listBaselines, listGoals,
   listImpactEvents, setBaseline, setEventCount, setGoal, updateImpactEvent, yearOverYear
@@ -208,6 +209,9 @@ export const ROUTES = {
   'impact-export': {
     GET: route('records.export', (ctx, staff, r) => exportImpactCsv(ctx, staff, r.query))
   },
+  backup: {
+    GET: route('records.backup', (ctx, staff) => exportBackup(ctx, staff))
+  },
   'public-impact': {
     GET: route('impact.view', (ctx, staff) => publicationOverview(ctx, staff)),
     POST: route('impact.publish', (ctx, staff, r) => publishImpact(ctx, staff, r.body))
@@ -234,6 +238,14 @@ export default async function handler(req, res) {
     const body = req.method === 'GET' ? {} : await readJson(req, entry.maxBody);
     const result = await entry.handle(ctx, staff, { query: query, body: body });
 
+    if (result && result.download) {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', result.download.contentType);
+      res.setHeader('Content-Disposition', 'attachment; filename="' + result.download.filename + '"');
+      res.setHeader('Cache-Control', 'no-store');
+      res.end(result.download.body);
+      return;
+    }
     if (result && typeof result.csv === 'string') {
       res.statusCode = 200;
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');

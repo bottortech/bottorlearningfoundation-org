@@ -126,3 +126,19 @@ test('sign-in still works if migration 002 has not been run yet', async () => {
   const coord = await login('coord@test.org', 'coord-pass');
   assert.equal((await admin(coord, 'GET', 'applications')).statusCode, 200);
 });
+
+test('full backup: administrator only, all records, no sign-in credentials, audited', async () => {
+  const e = await setup();
+  const adminCookie = await login('admin@test.org', 'admin-pass');
+  const coord = await login('coord@test.org', 'coord-pass');
+  assert.equal((await admin(coord, 'GET', 'backup')).statusCode, 403);
+  assert.equal((await admin(adminCookie, 'POST', 'team-permission', { body: { staff_id: e.coordinator.id, permission: 'records.backup', effect: 'grant' } })).statusCode, 422);
+  const res = await admin(adminCookie, 'GET', 'backup');
+  assert.equal(res.statusCode, 200);
+  assert.match(res.headers['content-disposition'], /bottor-portal-backup-2026-10-21\.json/);
+  const backup = JSON.parse(res.body);
+  assert.equal(backup.counts.staff_users, 3);
+  assert.ok('donations' in backup.data && 'inventory_transactions' in backup.data && 'audit_log' in backup.data);
+  assert.equal(res.body.includes('auth_user_id'), false);
+  assert.ok((await e.ctx.repo.list('audit_log', {})).some((a) => a.action === 'records.backup_downloaded'));
+});

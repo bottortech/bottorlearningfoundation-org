@@ -280,10 +280,13 @@ window.addEventListener('hashchange', route);
 /* ---------- Overview ---------- */
 
 function foundationOverview(f) {
-  if (f.donations_this_year === undefined && f.inventory_on_hand === undefined && !f.acknowledgments) return '';
+  const impactBlock = f.impact ? '<h2 class="overview-subhead">Community impact, ' + esc(f.impact_year) + '</h2><div class="stat-grid">' +
+    f.impact.map((m) => '<a class="stat-card stat-blue" href="#/impact"><span class="stat-value">' + (m.has_data ? esc(chartFigure(m.value, m.qualifier, m.unit)) : '—') +
+      '</span><span class="stat-label">' + esc(m.label) + '</span></a>').join('') + '</div>' : '';
+  if (f.donations_this_year === undefined && f.inventory_on_hand === undefined && !f.acknowledgments) return impactBlock;
   const card = (label, value, href, tone) => value === undefined ? '' :
     '<a class="stat-card stat-' + tone + '" href="' + href + '"><span class="stat-value">' + esc(value) + '</span><span class="stat-label">' + esc(label) + '</span></a>';
-  return '<h2 class="overview-subhead">Donations &amp; inventory</h2><div class="stat-grid">' +
+  return impactBlock + '<h2 class="overview-subhead">Donations &amp; inventory</h2><div class="stat-grid">' +
     card('Donations this year', f.donations_this_year, '#/donations', 'green') +
     card('Money received this year', f.monetary_this_year === undefined ? undefined : fmtMoney(f.monetary_this_year), '#/donations', 'green') +
     card('Items donated this year', f.in_kind_items_this_year, '#/donations', 'orange') +
@@ -870,7 +873,7 @@ async function viewAudit() {
   const res = await api('admin/audit?limit=300');
   if (!res.ok) return errorState(res.data.error, viewAudit);
   const rows = res.data.events;
-  main.innerHTML = '<div class="view-header"><h1>Audit Log</h1></div><p class="field-hint">The most recent 300 events. Entries cannot be edited or deleted from the dashboard.</p>' +
+  main.innerHTML = '<div class="view-header"><h1>Audit Log</h1>' + (canDo('records.backup') ? '<a class="btn btn-secondary btn-sm" download href="/api/admin/backup">Download full backup</a>' : '') + '</div><p class="field-hint">The most recent 300 events. Entries cannot be edited or deleted from the dashboard.</p>' +
     (rows.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Record</th><th>Details</th></tr></thead><tbody>' +
       rows.map((r) => '<tr><td class="nowrap">' + fmtDateTime(r.created_at) + '</td><td>' + esc(r.actor_email || 'Public / system') + '</td><td><code>' + esc(r.action) + '</code></td>' +
         '<td>' + esc(r.entity_type) + (r.entity_id ? ' <span class="muted-text small">' + esc(String(r.entity_id).slice(0, 8)) + '</span>' : '') + '</td>' +

@@ -55,11 +55,23 @@ function normalizeRow(row) {
 
 export function createSupabaseRepo(client) {
   return {
+    // Supabase returns at most 1,000 rows per request, so read every page;
+    // otherwise totals and exports would silently undercount as data grows.
     async list(table, query) {
-      let b = applyQuery(client.from(table).select('*'), query);
-      if (query && query.order) b = b.order(query.order[0], { ascending: query.order[1] !== 'desc' });
-      if (query && query.limit) b = b.limit(query.limit);
-      return (check(await b) || []).map(normalizeRow);
+      const PAGE = 1000;
+      const limit = query && query.limit ? query.limit : Infinity;
+      const rows = [];
+      for (let from = 0; rows.length < limit; from += PAGE) {
+        let b = applyQuery(client.from(table).select('*'), query);
+        // A stable order is required for paging; 'id' breaks ties.
+        if (query && query.order) b = b.order(query.order[0], { ascending: query.order[1] !== 'desc' });
+        b = b.order('id', { ascending: true });
+        const to = Math.min(from + PAGE, limit) - 1;
+        const page = check(await b.range(from, to)) || [];
+        rows.push.apply(rows, page);
+        if (page.length < to - from + 1) break;
+      }
+      return rows.map(normalizeRow);
     },
     async get(table, id) {
       return normalizeRow(check(await client.from(table).select('*').eq('id', id).maybeSingle()));

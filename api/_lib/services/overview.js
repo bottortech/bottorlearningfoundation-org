@@ -4,6 +4,7 @@ import { youthClearance } from './volunteers.js';
 import { inventorySummary } from './inventory.js';
 import { listDonations } from './donations.js';
 import { pendingAcknowledgmentCount } from './acknowledgments.js';
+import { impactReport } from './impact.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -81,6 +82,13 @@ async function foundationSummary(ctx, staff, today) {
   }
   if (can(staff, 'acknowledgments.view')) {
     out.acknowledgments = await pendingAcknowledgmentCount(ctx);
+  }
+  if (can(staff, 'impact.view')) {
+    const report = await impactReport(ctx, staff, { preset: 'year' });
+    out.impact_year = report.range.year;
+    out.impact = report.metrics.filter(function (m) {
+      return ['children_served', 'families_served', 'books_distributed', 'events_total'].indexOf(m.key) !== -1;
+    }).map(function (m) { return { key: m.key, label: m.label, value: m.value, qualifier: m.qualifier, unit: m.unit, has_data: m.has_data }; });
   }
   if (can(staff, 'inventory.view')) {
     const inv = await inventorySummary(ctx);

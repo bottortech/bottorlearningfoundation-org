@@ -43,11 +43,12 @@ export const PERMISSIONS = {
   'acknowledgments.view': ADMINS,
   'acknowledgments.manage': ADMINS,
   'acknowledgments.sign': ADMINS,
-  'records.export': ADMINS
+  'records.export': ADMINS,
+  'records.backup': ADMINS
 };
 
 // Never grantable to non-administrators, and never revocable from them.
-export const ADMIN_ONLY = ['permissions.manage', 'letters.approve', 'retention.manage', 'impact.publish', 'acknowledgments.sign'];
+export const ADMIN_ONLY = ['permissions.manage', 'letters.approve', 'retention.manage', 'impact.publish', 'acknowledgments.sign', 'records.backup'];
 
 // Labels and groups for the Team & Permissions screen.
 export const PERMISSION_INFO = {
@@ -79,7 +80,8 @@ export const PERMISSION_INFO = {
   'acknowledgments.view': ['Donor acknowledgments', 'View acknowledgment letters'],
   'acknowledgments.manage': ['Donor acknowledgments', 'Generate letters and record when sent'],
   'acknowledgments.sign': ['Donor acknowledgments', 'Finalize and sign thank-you letters'],
-  'records.export': ['Administration', 'Export and back up records'],
+  'records.export': ['Administration', 'Export records to CSV'],
+  'records.backup': ['Administration', 'Download a full backup of all records'],
   'retention.manage': ['Administration', 'Purge records past retention'],
   'audit.view': ['Administration', 'View the activity log'],
   'permissions.manage': ['Administration', 'Assign and revoke permissions']

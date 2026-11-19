@@ -151,3 +151,9 @@ Run `supabase/migrations/20261119000000_impact_reporting.sql` once in **Supabase
   - Responses are cached briefly at the edge, so a publish appears within about 1–5 minutes.
   - **If the database is unavailable,** visitors see the last published figures saved in their browser. If they have none, they see the figures written into `index.html`. Keep those written figures as the fallback.
 - **Before your first publish,** record the website's current totals under **Starting totals** with the span they cover, then check the preview matches the site.
+
+## Backups
+
+- **Activity Log → Download full backup** (administrator only) saves every portal record as one JSON file. Store it somewhere safe and private, because it contains personal information.
+- Uploaded files (donation documents, signatures) stay in Supabase Storage. The backup includes their details.
+- The Supabase free plan doesn't include automatic daily backups, so download one regularly, for example monthly.
