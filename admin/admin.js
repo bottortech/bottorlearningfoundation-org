@@ -179,6 +179,7 @@ document.getElementById('modal-form').addEventListener('submit', async (e) => {
     submit.textContent = original;
   }
 });
+modal.addEventListener('close', () => modal.classList.remove('modal-wide'));
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
 
@@ -256,7 +257,8 @@ const VIEWS = {
   inventory: viewInventory,
   acknowledgments: viewAcknowledgments,
   impact: viewImpact,
-  'impact-event': viewImpactEvent
+  'impact-event': viewImpactEvent,
+  'public-impact': viewPublicImpact
 };
 
 function route() {
@@ -266,7 +268,7 @@ function route() {
   document.querySelectorAll('.admin-nav a').forEach((a) => {
     const active = a.dataset.view === name || (name === 'volunteer' && a.dataset.view === 'volunteers') ||
       ((name === 'donation' || name === 'donors') && a.dataset.view === 'donations') ||
-      (name === 'impact-event' && a.dataset.view === 'impact');
+      ((name === 'impact-event' || name === 'public-impact') && a.dataset.view === 'impact');
     a.classList.toggle('active', active);
     if (active) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
@@ -1464,6 +1466,7 @@ async function viewImpact() {
     (canDo('records.export') ? '<a class="btn btn-secondary btn-sm" download href="/api/admin/impact-export?' + params + '">Export CSV</a>' : '') +
     (canDo('impact.record') ? '<button type="button" class="btn btn-secondary btn-sm" id="imp-add-event">Add event</button><button type="button" class="btn btn-secondary btn-sm" id="imp-baselines">Starting totals</button>' : '') +
     (canDo('impact.goals') ? '<button type="button" class="btn btn-secondary btn-sm" id="imp-goals">Goals</button>' : '') +
+    '<a class="btn btn-secondary btn-sm" href="#/public-impact">Public website</a>' +
     '</div></div>' +
     '<div class="range-bar"><div class="segmented" role="group" aria-label="Report period">' + Object.keys(PRESETS).map((k) =>
       '<button type="button" data-preset="' + k + '" aria-pressed="' + (k === preset) + '">' + PRESETS[k] + '</button>').join('') + '</div>' +
@@ -1644,6 +1647,127 @@ async function viewImpactEvent(id) {
       const r = await api('admin/impact-count', { method: 'POST', body: { event_id: e.id, metric: row.dataset.metric, remove: true } });
       if (r.ok) { toast('Count cleared.'); viewImpactEvent(id); } else toast(r.data.error, 'bad');
     });
+  });
+}
+
+/* ---------- Public website statistics ---------- */
+
+let publicDraft = null; // local, unpublished edits: [{ key, label, detail, refresh }]
+
+function previewMarkup() {
+  return '<section class="community-impact public-preview" aria-label="Preview of the website section"><div class="container">' +
+    '<div class="section-header"><h2>Community Impact</h2><p class="impact-asof"></p></div>' +
+    '<div class="impact-stats"></div>' +
+    '<div class="impact-engagement"><h3></h3><div class="impact-engagement-grid"></div>' +
+    '<p class="impact-note">These are estimated engagements, not a count of individual people or children served. The same visitor may have stopped by or played more than once.</p></div>' +
+    '<p class="impact-footnote"></p></div></section>';
+}
+
+async function ensurePublicRenderer() {
+  if (window.BLFPublicImpact) return;
+  await new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = '/js/public-impact.js';
+    s.onload = resolve;
+    s.onerror = resolve;
+    document.head.appendChild(s);
+  });
+}
+
+async function viewPublicImpact() {
+  loading('Loading public website statistics…');
+  const res = await api('admin/public-impact');
+  if (!res.ok) return errorState(res.data.error, viewPublicImpact);
+  const d = res.data;
+  const admin = canDo('impact.publish');
+  if (!publicDraft) publicDraft = d.items.map((i) => ({ key: i.key, label: i.label, detail: i.detail || '', refresh: false }));
+  const publishedByKey = new Map(d.items.map((i) => [i.key, i]));
+  const availableByKey = new Map(d.available.map((a) => [a.key, a]));
+  const draftKeys = new Set(publicDraft.map((x) => x.key));
+  const dirty = JSON.stringify(publicDraft) !== JSON.stringify(d.items.map((i) => ({ key: i.key, label: i.label, detail: i.detail || '', refresh: false })));
+
+  const rowFor = (x, idx) => {
+    const pub = publishedByKey.get(x.key);
+    const cur = pub ? pub.current_display : (availableByKey.get(x.key) || {}).display;
+    const status = !pub ? '<span class="badge badge-warn">New, not published</span>'
+      : x.refresh ? '<span class="badge badge-warn">Will update to ' + esc(cur) + '</span>'
+        : pub.changed ? '<span class="badge badge-blue">Records now show ' + esc(cur) + '</span>' : '<span class="badge badge-ok">Up to date</span>';
+    return '<tr data-key="' + esc(x.key) + '"><td>' + (admin ? '<input type="text" class="pub-input" data-field="label" maxlength="80" aria-label="Label" value="' + esc(x.label) + '">' +
+      '<input type="text" class="pub-input small" data-field="detail" maxlength="200" placeholder="Optional short description" aria-label="Description" value="' + esc(x.detail) + '">' : '<strong>' + esc(x.label) + '</strong><br><span class="muted-text small">' + esc(x.detail) + '</span>') + '</td>' +
+      '<td class="nowrap"><strong>' + esc(pub && !x.refresh ? pub.display : cur) + '</strong></td><td>' + status + '</td>' +
+      (admin ? '<td class="actions-cell">' + (pub && pub.changed && !x.refresh ? '<button type="button" class="btn btn-secondary btn-xs" data-act="refresh">Use new number</button> ' : '') +
+        (idx > 0 ? '<button type="button" class="btn-link" data-act="up" aria-label="Move up">↑</button>' : '') +
+        (idx < publicDraft.length - 1 ? '<button type="button" class="btn-link" data-act="down" aria-label="Move down">↓</button>' : '') +
+        ' <button type="button" class="btn-link" data-act="remove">' + (pub ? 'Unpublish' : 'Remove') + '</button></td>' : '') + '</tr>';
+  };
+
+  main.innerHTML = '<p class="breadcrumb"><a href="#/impact">← Community Impact</a></p><div class="view-header"><h1>Public Website Statistics</h1>' +
+    (admin ? '<div class="action-row"><button type="button" class="btn btn-secondary btn-sm" id="pub-discard"' + (dirty ? '' : ' disabled') + '>Discard changes</button>' +
+      '<button type="button" class="btn btn-primary btn-sm" id="pub-review"' + (dirty ? '' : ' disabled') + '>Preview &amp; publish</button></div>' : '') + '</div>' +
+    '<p class="field-hint">These are the figures shown in the Community Impact section of your home page. Numbers come from your records (all-time, with starting totals counted once). ' +
+    'You choose which ones appear and how they’re worded, but you can’t type a number. Donation amounts and anything about individual donors, volunteers, or recipients can never be published.</p>' +
+    '<div class="notice-box">' + (d.published ? 'Live on the website since ' + fmtDateTime(d.published.approved_at) + (d.published.approved_by ? ' (approved by ' + esc(d.published.approved_by) + ')' : '') + '. The website shows “Totals as of ' + fmtDate(d.published.as_of) + '”.'
+      : 'Nothing has been published yet, so the website still shows the figures written into the page. Your first publication replaces them.') + '</div>' +
+    (dirty ? '<div class="form-alert unpublished-alert" role="status"><strong>You have unpublished changes.</strong> Preview and publish them, or discard them.</div>' : '') +
+    '<section class="panel"><h2>On the website' + (dirty ? ' (after your changes)' : '') + '</h2>' + (publicDraft.length
+      ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Statistic as shown</th><th>Number</th><th>Status</th>' + (admin ? '<th><span class="sr-only">Actions</span></th>' : '') + '</tr></thead><tbody>' +
+        publicDraft.map(rowFor).join('') + '</tbody></table></div>' : emptyState('No statistics selected.')) +
+    (admin ? '<label for="pub-heading" class="field-hint">Heading above interaction and play figures</label><input type="text" id="pub-heading" class="pub-input" maxlength="80" value="' + esc(sessionStorage.getItem('pub.heading') || (d.published ? d.published.engagement_heading : 'Candyland & Career Day engagement')) + '">' : '') + '</section>' +
+    '<section class="panel"><h2>Available to add</h2>' + (d.available.filter((a) => !draftKeys.has(a.key)).length
+      ? '<ul class="letter-list">' + d.available.filter((a) => !draftKeys.has(a.key)).map((a) => '<li><strong>' + esc(a.suggested_label) + '</strong> <span class="muted-text">' +
+        (a.has_data ? esc(a.display) + (a.includes_starting_total ? ' · includes starting total' : '') : 'no records yet') + '</span> ' +
+        (admin && a.has_data ? '<button type="button" class="btn-link small" data-add="' + esc(a.key) + '">Add to website</button>' : '') + '</li>').join('') + '</ul>'
+      : emptyState('Every publishable statistic is selected.')) + '</section>' +
+    '<section class="panel"><h2>History</h2>' + (d.history.length
+      ? '<ul class="letter-list">' + d.history.map((h) => '<li><strong>' + fmtDateTime(h.approved_at) + '</strong> ' + (h.status === 'published' ? '<span class="badge badge-ok">Live</span>' : '<span class="badge badge-muted">Replaced</span>') +
+        ' <span class="muted-text small">' + esc(h.approved_by) + '</span><br><span class="small">' + h.items.map((i) => esc(i.label) + ': ' + esc(i.display)).join(' · ') + '</span></li>').join('') + '</ul>'
+      : emptyState('Nothing has been published yet.')) + '</section>';
+
+  if (!admin) return;
+  const rerender = () => viewPublicImpact();
+  main.querySelectorAll('tr[data-key]').forEach((tr) => {
+    const item = publicDraft.find((x) => x.key === tr.dataset.key);
+    tr.querySelectorAll('.pub-input').forEach((input) => input.addEventListener('change', () => { item[input.dataset.field] = input.value; rerender(); }));
+    tr.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => {
+      const i = publicDraft.indexOf(item);
+      if (b.dataset.act === 'refresh') item.refresh = true;
+      if (b.dataset.act === 'remove') publicDraft.splice(i, 1);
+      if (b.dataset.act === 'up' && i > 0) publicDraft.splice(i - 1, 0, publicDraft.splice(i, 1)[0]);
+      if (b.dataset.act === 'down') publicDraft.splice(i + 1, 0, publicDraft.splice(i, 1)[0]);
+      rerender();
+    }));
+  });
+  main.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', () => {
+    const a = availableByKey.get(b.dataset.add);
+    publicDraft.push({ key: a.key, label: a.suggested_label, detail: '', refresh: true });
+    rerender();
+  }));
+  const heading = document.getElementById('pub-heading');
+  heading.addEventListener('change', () => { sessionStorage.setItem('pub.heading', heading.value); });
+  const discard = document.getElementById('pub-discard');
+  discard.addEventListener('click', () => { publicDraft = null; sessionStorage.removeItem('pub.heading'); rerender(); });
+  document.getElementById('pub-review').addEventListener('click', () => reviewPublication(heading.value));
+}
+
+async function reviewPublication(heading) {
+  await ensurePublicRenderer();
+  const body = { items: publicDraft, engagement_heading: heading };
+  const pre = await api('admin/public-impact', { method: 'POST', body: Object.assign({ preview: true }, body) });
+  if (!pre.ok) return toast(pre.data.error + (pre.data.errors ? ' ' + Object.values(pre.data.errors).join(' ') : ''), 'bad');
+  openModal({
+    title: 'Preview: Community Impact on your home page',
+    submitLabel: 'Publish to website',
+    body: '<p class="field-hint">This is exactly how the section will look. Nothing changes on the website until you publish.</p>' +
+      '<div class="preview-frame" id="pub-preview">' + previewMarkup() + '</div>' +
+      '<label class="check-label"><input type="checkbox" name="confirm"> <span>I’ve reviewed these figures and approve them for the public website.</span></label>',
+    onOpen: (b) => {
+      modal.classList.add('modal-wide');
+      window.BLFPublicImpact.render(b.querySelector('.public-preview'), pre.data.preview);
+    },
+    onSubmit: (f) => api('admin/public-impact', { method: 'POST', body: Object.assign({ confirm: f.confirm === true }, body) }).then((r) => {
+      if (r.ok) { publicDraft = null; sessionStorage.removeItem('pub.heading'); toast('Published. The website updates within a few minutes.'); viewPublicImpact(); }
+      return r;
+    })
   });
 }
 

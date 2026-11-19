@@ -57,7 +57,7 @@
       ]
     },
     {
-      "source": "/api/(.*)",
+      "source": "/api/((?!impact$).*)",
       "headers": [
         {
           "key": "X-Robots-Tag",

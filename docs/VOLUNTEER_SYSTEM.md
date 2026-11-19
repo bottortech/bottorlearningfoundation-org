@@ -130,3 +130,24 @@ Run `supabase/migrations/20261119000000_impact_reporting.sql` once in **Supabase
 - **Reports:** monthly, quarterly, annual, all-time, and custom ranges, plus monthly charts, year over year, annual goals, and single-event reports.
 - **Export:** printable PDF (with an option to leave out donation amounts) and CSV.
 - **The public website figures are unchanged.** Connecting them is Phase 6.
+
+## Public website statistics (Phase 6)
+
+- **Portal → Community Impact → Public website** controls the home page's Community Impact section.
+- **Numbers always come from your records.** They use the all-time figures, with starting totals counted once. You choose which statistics appear, their order, label, and an optional short description. You can't type a number.
+- **Changes are per statistic:**
+  - Add a statistic.
+  - "Use new number" when your records have changed.
+  - Unpublish a statistic.
+  - Updating one statistic never changes the others.
+  - Unpublished edits show as "You have unpublished changes" until you preview and publish them.
+- **Publishing:**
+  - Every publish shows an exact preview first and needs a confirmation box.
+  - Only administrators can publish (`impact.publish` can't be granted to anyone else).
+  - Every publish is kept in **History** and in the activity log.
+- **Never publishable:** donation amounts and counts, or anything about individual donors, volunteers, or recipients. Public wording can't contain email addresses, phone numbers, or ID numbers.
+- **Where the website gets its numbers:**
+  - The website calls `GET /api/impact`, which returns only label, displayed figure, count type, description, and section.
+  - Responses are cached briefly at the edge, so a publish appears within about 1–5 minutes.
+  - **If the database is unavailable,** visitors see the last published figures saved in their browser. If they have none, they see the figures written into `index.html`. Keep those written figures as the fallback.
+- **Before your first publish,** record the website's current totals under **Starting totals** with the span they cover, then check the preview matches the site.

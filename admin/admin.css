@@ -1170,3 +1170,36 @@ progress::-moz-progress-bar {
     grid-column: 1 / -1;
   }
 }
+
+/* ---------- Public website statistics ---------- */
+.admin-modal.modal-wide {
+  width: min(1040px, calc(100vw - 32px));
+}
+
+.preview-frame {
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.preview-frame .community-impact {
+  padding: 32px 0;
+}
+
+.pub-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.92rem;
+  margin-bottom: 4px;
+}
+
+.unpublished-alert {
+  background: var(--orange-light);
+  border: 1px solid #FBD38D;
+  color: var(--orange-dark);
+  margin-top: 12px;
+}

@@ -21,6 +21,7 @@ import {
 import { purgeRecords, retentionOverview } from '../_lib/services/retention.js';
 import { dashboardSummary, listAudit } from '../_lib/services/overview.js';
 import { listTeam, setPermission } from '../_lib/services/team.js';
+import { publicationOverview, publishImpact } from '../_lib/services/publication.js';
 import {
   createImpactEvent, eventReport, exportImpactCsv, impactReport, impactTrend, listBaselines, listGoals,
   listImpactEvents, setBaseline, setEventCount, setGoal, updateImpactEvent, yearOverYear
@@ -206,6 +207,10 @@ export const ROUTES = {
   },
   'impact-export': {
     GET: route('records.export', (ctx, staff, r) => exportImpactCsv(ctx, staff, r.query))
+  },
+  'public-impact': {
+    GET: route('impact.view', (ctx, staff) => publicationOverview(ctx, staff)),
+    POST: route('impact.publish', (ctx, staff, r) => publishImpact(ctx, staff, r.body))
   },
   'program-events': {
     GET: route('dashboard.view', (ctx) => listProgramEvents(ctx)),

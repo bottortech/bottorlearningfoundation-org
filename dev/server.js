@@ -9,6 +9,7 @@ import { setContext } from '../api/_lib/context.js';
 import { createMemoryContext } from './memory-context.js';
 import { seedDemoData, DEMO_ACCOUNTS } from './seed.js';
 import applyHandler from '../api/apply.js';
+import impactHandler from '../api/impact.js';
 import authHandler from '../api/auth/[action].js';
 import adminHandler from '../api/admin/[resource].js';
 
@@ -51,6 +52,7 @@ http.createServer(async (req, res) => {
   const { pathname } = new URL(req.url, 'http://localhost');
   try {
     if (pathname === '/api/apply') return await applyHandler(req, res);
+    if (pathname === '/api/impact') return process.env.DEV_IMPACT_DOWN ? (res.statusCode = 503, res.end('{}')) : await impactHandler(req, res);
     if (pathname.startsWith('/api/auth/')) return await authHandler(req, res);
     if (pathname.startsWith('/api/admin/')) return await adminHandler(req, res);
     if (pathname.startsWith('/__dev-storage/')) {

@@ -151,4 +151,8 @@ export async function seedDemoData(ctx) {
   await cnt(ev, 'children_served', 55); await cnt(ev, 'families_served', 30); await cnt(ev, 'game_participants', 48);
   await r.insert('impact_goals', { id: randomUUID(), goal_year: year, metric: 'children_served', target: 300, notes: null, set_by: staff.admin.id, updated_at: new Date().toISOString() });
   await r.insert('impact_goals', { id: randomUUID(), goal_year: year, metric: 'books_distributed', target: 150, notes: null, set_by: staff.admin.id, updated_at: new Date().toISOString() });
+
+  // Starting totals matching the figures already on the website (fictional dates for the demo).
+  await r.insert('impact_baselines', { id: randomUUID(), metric: 'books_distributed', value: 155, qualifier: 'approximate', period_start: year + '-09-01', as_of: year + '-11-02', notes: 'Website totals', recorded_by: staff.admin.id, recorded_at: new Date().toISOString() });
+  await r.insert('impact_baselines', { id: randomUUID(), metric: 'events_total', value: 4, qualifier: 'exact', period_start: year + '-09-01', as_of: year + '-11-02', notes: 'Website totals', recorded_by: staff.admin.id, recorded_at: new Date().toISOString() });
 }
