@@ -3,6 +3,7 @@ import { summarizeHours, todayInOrgTimeZone } from '../../../js/volunteer-core.j
 import { youthClearance } from './volunteers.js';
 import { inventorySummary } from './inventory.js';
 import { listDonations } from './donations.js';
+import { pendingAcknowledgmentCount } from './acknowledgments.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -77,6 +78,9 @@ async function foundationSummary(ctx, staff, today) {
         donation_type: d.donation_type, item_summary: d.item_summary, amount: d.amount
       };
     });
+  }
+  if (can(staff, 'acknowledgments.view')) {
+    out.acknowledgments = await pendingAcknowledgmentCount(ctx);
   }
   if (can(staff, 'inventory.view')) {
     const inv = await inventorySummary(ctx);

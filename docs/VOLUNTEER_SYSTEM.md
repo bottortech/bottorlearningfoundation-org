@@ -96,3 +96,16 @@ Run `supabase/migrations/20261118000000_foundation_management.sql` once, in **Su
 - An administrator can grant or revoke any single permission for one person in **Portal → Team & Permissions**. Changes take effect on that person's next action and are recorded in the activity log.
 - Administrator-only, never grantable: assigning permissions, approving verification letters, purging records, and approving public impact figures.
 - New donation, inventory, impact, acknowledgment, and export permissions start **administrator-only**. Nobody else gets them until an administrator grants them.
+
+## Donor thank-you letters (Phase 4)
+
+- **Portal → Thank-you Letters** lists donations that still need a letter, plus drafts, letters ready to send, sent letters, and void letters.
+- Gift facts (date, amount, items, designation) always come from the donation record and can't be edited in the letter. Fix the donation record instead; drafts update automatically. The greeting, opening, closing, and P.S. are editable.
+- Tax wording:
+  - Money gifts state the amount.
+  - Item gifts describe the items and **never state a value**.
+  - Every standard letter says whether goods or services were provided. If something was provided, the letter can't be finalized until its value is entered.
+  - Gifts through a donor-advised fund or IRA, and gifts of services, vehicles, securities/crypto, or property needing appraisal, get a thank-you **without** tax wording. Check with your accountant.
+  - Have your accountant review the wording once before you start sending letters.
+- Finalizing and signing letters is administrator-only. When you finalize, you choose either your uploaded digital signature or space for a handwritten one. Each issued letter keeps a frozen copy of the signature used.
+- **Nothing is ever sent by the system.** Print or save the letter as a PDF, send it yourself, then click **Record as sent** (date and method).

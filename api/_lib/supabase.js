@@ -137,6 +137,21 @@ export function createSupabaseStorage(admin) {
       const { error } = await admin.storage.from(DOCUMENT_BUCKET).upload(path, buffer, { contentType: contentType, upsert: false });
       if (error) throw new DbError(error.message, 'STORAGE');
     },
+    // Returns a Buffer, or null if the file doesn't exist.
+    async download(path) {
+      await ensureBucket();
+      const { data, error } = await admin.storage.from(DOCUMENT_BUCKET).download(path);
+      if (error) {
+        if (/not.?found|does not exist|404/i.test(error.message || '') || error.statusCode === '404' || error.status === 404) return null;
+        throw new DbError(error.message, 'STORAGE');
+      }
+      return Buffer.from(await data.arrayBuffer());
+    },
+    async remove(path) {
+      await ensureBucket();
+      const { error } = await admin.storage.from(DOCUMENT_BUCKET).remove([path]);
+      if (error) throw new DbError(error.message, 'STORAGE');
+    },
     async signedUrl(path, seconds) {
       const { data, error } = await admin.storage.from(DOCUMENT_BUCKET).createSignedUrl(path, seconds);
       if (error) throw new DbError(error.message, 'STORAGE');

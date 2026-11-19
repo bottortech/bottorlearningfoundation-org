@@ -250,7 +250,8 @@ const VIEWS = {
   donations: viewDonations,
   donation: viewDonation,
   donors: viewDonors,
-  inventory: viewInventory
+  inventory: viewInventory,
+  acknowledgments: viewAcknowledgments
 };
 
 function route() {
@@ -271,7 +272,7 @@ window.addEventListener('hashchange', route);
 /* ---------- Overview ---------- */
 
 function foundationOverview(f) {
-  if (f.donations_this_year === undefined && f.inventory_on_hand === undefined) return '';
+  if (f.donations_this_year === undefined && f.inventory_on_hand === undefined && !f.acknowledgments) return '';
   const card = (label, value, href, tone) => value === undefined ? '' :
     '<a class="stat-card stat-' + tone + '" href="' + href + '"><span class="stat-value">' + esc(value) + '</span><span class="stat-label">' + esc(label) + '</span></a>';
   return '<h2 class="overview-subhead">Donations &amp; inventory</h2><div class="stat-grid">' +
@@ -280,7 +281,12 @@ function foundationOverview(f) {
     card('Items donated this year', f.in_kind_items_this_year, '#/donations', 'orange') +
     card('Items on hand', f.inventory_on_hand, '#/inventory', 'blue') +
     card('Items distributed (all time)', f.items_distributed, '#/inventory', 'gray') +
-    '</div>' + (f.recent_donations ? '<section class="panel"><h2>Recent donations</h2>' + (f.recent_donations.length
+    (f.acknowledgments ? card('Donations needing a thank-you', f.acknowledgments.not_started, '#/acknowledgments', 'orange') +
+      card('Thank-you letters ready to send', f.acknowledgments.ready_to_send, '#/acknowledgments', 'blue') : '') +
+    '</div>' + (f.acknowledgments && f.acknowledgments.recent_pending.length ? '<section class="panel"><h2>Pending thank-you letters</h2><ul class="attention-list">' +
+      f.acknowledgments.recent_pending.map((p) => '<li><a href="#/donation/' + esc(p.donation_id) + '">' + fmtDate(p.received_on) + '</a><span>' +
+        esc(p.donor_name || 'No donor record') + ' · ' + (p.donation_type === 'monetary' ? 'money' : 'items') + '</span></li>').join('') +
+      '</ul>' + (f.acknowledgments.drafts ? '<p class="field-hint">' + f.acknowledgments.drafts + ' draft letter' + (f.acknowledgments.drafts === 1 ? '' : 's') + ' waiting to be finalized.</p>' : '') + '</section>' : '') + (f.recent_donations ? '<section class="panel"><h2>Recent donations</h2>' + (f.recent_donations.length
       ? '<ul class="attention-list recent-list">' + f.recent_donations.map((d) => '<li><a href="#/donation/' + esc(d.id) + '">' + fmtDate(d.received_on) + '</a><span>' +
         esc(d.donor_name || 'Anonymous') + (d.is_anonymous && d.donor_name ? ' (anonymous)' : '') + ' · ' +
         (d.donation_type === 'monetary' ? (d.amount !== undefined ? fmtMoney(d.amount) : 'Money') : esc(d.item_summary)) + '</span></li>').join('') + '</ul>'
@@ -1064,12 +1070,18 @@ async function viewDonation(id) {
     (manage ? '<label class="btn btn-secondary btn-sm file-btn">Upload file<input type="file" id="doc-file" accept="application/pdf,image/jpeg,image/png,image/webp" hidden></label>' : '') + '</div>' +
     (documents.length ? '<ul class="letter-list">' + documents.map((doc) => '<li><button type="button" class="btn-link" data-doc="' + esc(doc.id) + '">' + esc(doc.file_name) + '</button> <span class="muted-text small">' +
       Math.ceil(doc.size_bytes / 1024) + ' KB · ' + fmtDateTime(doc.uploaded_at) + '</span></li>').join('') + '</ul>' : emptyState('No documents yet. PDF, JPG, PNG, or WebP, up to 3 MB.')) + '</section>' +
-    '<section class="panel panel-wide"><h2>Thank-you letters</h2>' + (acknowledgments.length
-      ? '<ul class="letter-list">' + acknowledgments.map((a) => '<li>' + esc(a.letter_number) + ' · ' + esc(a.status) + (a.sent_on ? ' · sent ' + fmtDate(a.sent_on) : '') + '</li>').join('') + '</ul>'
-      : emptyState('No thank-you letter yet. Letters are added in the next phase.')) + '</section>' +
+    '<section class="panel panel-wide"><div class="panel-head"><h2>Thank-you letters</h2>' +
+    (d.status !== 'void' && canDo('acknowledgments.manage') && !acknowledgments.some((a) => a.status !== 'void')
+      ? (donor ? '<button type="button" class="btn btn-secondary btn-sm" id="new-letter">Create thank-you letter</button>' : '<span class="muted-text small">Add a donor record to send a letter</span>') : '') + '</div>' +
+    (acknowledgments.length
+      ? '<ul class="letter-list">' + acknowledgments.map((a) => '<li>' + (canDo('acknowledgments.view') ? '<a href="/admin/acknowledgment.html?id=' + esc(a.id) + '" target="_blank" rel="noopener">' + esc(a.letter_number) + '</a>' : esc(a.letter_number)) +
+        ' ' + ackBadge(a.status) + (a.sent_on ? ' <span class="muted-text small">sent ' + fmtDate(a.sent_on) + '</span>' : '') + '</li>').join('') + '</ul>'
+      : emptyState('No thank-you letter yet.')) + '</section>' +
     '</div>';
 
   const reload = () => viewDonation(id);
+  const newLetter = document.getElementById('new-letter');
+  if (newLetter) newLetter.addEventListener('click', () => openLetterForm(d.id, reload));
   const edit = document.getElementById('edit-don');
   if (edit) edit.addEventListener('click', () => openDonationForm(d, reload));
   const voidBtn = document.getElementById('void-don');
@@ -1138,6 +1150,133 @@ async function viewDonors() {
       title: 'Edit donor', body: form(x),
       onSubmit: (f) => api('admin/donors?id=' + encodeURIComponent(x.id), { method: 'PATCH', body: f }).then((r) => { if (r.ok) { toast('Donor updated.'); viewDonors(); } return r; })
     });
+  }));
+}
+
+/* ---------- Donor thank-you letters ---------- */
+
+const ACK_STATUS = { draft: ['Draft', 'badge-warn'], ready: ['Ready to send', 'badge-blue'], sent: ['Sent', 'badge-ok'], void: ['Void', 'badge-muted'] };
+
+function ackBadge(status) {
+  const s = ACK_STATUS[status] || [status, 'badge-muted'];
+  return '<span class="badge ' + s[1] + '">' + esc(s[0]) + '</span>';
+}
+
+function openLetterForm(donationId, reload) {
+  openModal({
+    title: 'Create thank-you letter',
+    submitLabel: 'Create draft',
+    body: '<p>The draft is filled in from the donation and donor records. You can review and edit the wording before finalizing. Nothing is sent.</p>' +
+      '<label for="ak-src">How was the gift made?</label><select id="ak-src" name="special_source">' + selectOptions({
+        none: 'Standard gift', daf: 'Donor-advised fund grant', ira: 'IRA / retirement account distribution', services: 'Donated services',
+        vehicle: 'Vehicle', securities: 'Stock, securities, or cryptocurrency', real_property: 'Real estate or other property needing appraisal'
+      }, 'none') + '</select>' +
+      '<p class="field-hint" id="ak-hint" hidden>Gifts like this get a thank-you without tax wording. Check with your accountant about what this donor needs.</p>' +
+      '<fieldset class="perm-group" id="ak-gs"><legend>Did the donor receive anything in return?</legend>' +
+      '<label class="check-label"><input type="radio" name="goods_services" value="none" checked> <span>No, nothing was provided</span></label>' +
+      '<label class="check-label"><input type="radio" name="goods_services" value="provided"> <span>Yes, goods or services were provided</span></label>' +
+      '<div id="ak-gs-detail" hidden><label for="ak-gsd">What did they receive?</label><input type="text" id="ak-gsd" name="goods_services_description" maxlength="300" placeholder="e.g. two event dinner tickets">' +
+      '<label for="ak-gsv">Its fair market value ($)</label><input type="number" id="ak-gsv" name="goods_services_value" min="0" step="0.01">' +
+      '<p class="field-hint">You can add the value later, but the letter can’t be finalized without it.</p></div></fieldset>',
+    onOpen: (body) => {
+      const sync = () => {
+        const standard = body.querySelector('#ak-src').value === 'none';
+        body.querySelector('#ak-gs').hidden = !standard;
+        body.querySelector('#ak-hint').hidden = standard;
+        body.querySelector('#ak-gs-detail').hidden = (body.querySelector('input[name=goods_services]:checked') || {}).value !== 'provided';
+      };
+      body.addEventListener('change', sync);
+      sync();
+    },
+    onSubmit: (f) => api('admin/acknowledgments', { method: 'POST', body: {
+      donation_id: donationId, special_source: f.special_source, goods_services: f.goods_services,
+      goods_services_description: f.goods_services_description, goods_services_value: f.goods_services_value
+    } }).then((r) => {
+      if (r.ok) {
+        toast('Draft letter created.');
+        window.open('/admin/acknowledgment.html?id=' + encodeURIComponent(r.data.acknowledgment.id), '_blank', 'noopener');
+        reload();
+      } else if (r.status === 409 && r.data.acknowledgment_id) {
+        window.open('/admin/acknowledgment.html?id=' + encodeURIComponent(r.data.acknowledgment_id), '_blank', 'noopener');
+      }
+      return r;
+    })
+  });
+}
+
+async function viewAcknowledgments() {
+  loading('Loading thank-you letters…');
+  const tab = sessionStorage.getItem('ack.tab') || 'pending';
+  const res = await api('admin/acknowledgments');
+  if (!res.ok) return errorState(res.data.error, viewAcknowledgments);
+  const { pending, letters } = res.data;
+  const counts = {
+    pending: pending.length,
+    draft: letters.filter((l) => l.status === 'draft').length,
+    ready: letters.filter((l) => l.status === 'ready').length,
+    sent: letters.filter((l) => l.status === 'sent').length,
+    void: letters.filter((l) => l.status === 'void').length
+  };
+  const TABS = { pending: 'Needs a letter', draft: 'Drafts', ready: 'Ready to send', sent: 'Sent', void: 'Void' };
+  const manage = canDo('acknowledgments.manage');
+
+  let list;
+  if (tab === 'pending') {
+    list = pending.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Received</th><th>Donor</th><th>Type</th><th></th></tr></thead><tbody>' +
+      pending.map((p) => '<tr><td class="nowrap"><a href="#/donation/' + esc(p.donation_id) + '">' + fmtDate(p.received_on) + '</a>' + (p.is_historical ? '<div class="muted-text small">Historical</div>' : '') + '</td>' +
+        '<td>' + (p.donor_name ? esc(p.donor_name) : '<span class="muted-text">No donor record</span>') + '</td>' +
+        '<td>' + (p.donation_type === 'monetary' ? 'Money' : 'Items') + '</td>' +
+        '<td class="actions-cell">' + (manage && p.can_generate ? '<button type="button" class="btn btn-secondary btn-xs" data-new-letter="' + esc(p.donation_id) + '">Create letter</button>'
+          : (!p.can_generate ? '<span class="muted-text small">Anonymous with no donor record: no one to address</span>' : '')) + '</td></tr>').join('') +
+      '</tbody></table></div>' : emptyState('Every recorded donation has a thank-you letter.');
+  } else {
+    const rows = letters.filter((l) => l.status === tab);
+    list = rows.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Letter</th><th>Donor</th><th>Gift received</th><th>Status</th><th>Dates</th></tr></thead><tbody>' +
+      rows.map((l) => '<tr><td><a href="/admin/acknowledgment.html?id=' + esc(l.id) + '" target="_blank" rel="noopener">' + esc(l.letter_number) + '</a></td>' +
+        '<td>' + esc(l.donor_name) + '</td><td>' + fmtDate(l.received_on) + '</td><td>' + ackBadge(l.status) + '</td>' +
+        '<td class="small">Created ' + fmtDate(l.generated_at) + (l.issue_date ? '<br>Dated ' + fmtDate(l.issue_date) : '') +
+        (l.sent_on ? '<br>Sent ' + fmtDate(l.sent_on) + ' · ' + esc({ mail: 'mail', email: 'email', in_person: 'in person', other: 'other' }[l.sent_method] || '') : '') + '</td></tr>').join('') +
+      '</tbody></table></div>' : emptyState('No letters here.');
+  }
+
+  main.innerHTML = '<div class="view-header"><h1>Thank-you Letters</h1></div>' +
+    '<p class="field-hint">Letters are never sent automatically. Create a draft, review and edit it, finalize and sign it, print or save it as a PDF and send it yourself, then record it as sent.</p>' +
+    '<div class="segmented" role="group" aria-label="Filter letters">' + Object.keys(TABS).map((k) =>
+      '<button type="button" data-tab="' + k + '" aria-pressed="' + (k === tab) + '">' + esc(TABS[k]) + ' (' + counts[k] + ')</button>').join('') + '</div>' +
+    '<div class="ack-list">' + list + '</div>' +
+    (canDo('acknowledgments.sign') ? '<section class="panel" id="sig-panel"><h2>Your digital signature</h2><div id="sig-body"><span class="spinner" aria-hidden="true"></span></div></section>' : '');
+
+  main.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { sessionStorage.setItem('ack.tab', b.dataset.tab); viewAcknowledgments(); }));
+  main.querySelectorAll('[data-new-letter]').forEach((b) => b.addEventListener('click', () => openLetterForm(b.dataset.newLetter, viewAcknowledgments)));
+  if (canDo('acknowledgments.sign')) renderSignaturePanel();
+}
+
+async function renderSignaturePanel() {
+  const box = document.getElementById('sig-body');
+  const res = await api('admin/signature');
+  if (!res.ok) { box.textContent = res.data.error || 'Could not load your signature.'; return; }
+  box.innerHTML = '<p class="field-hint">Optional. When you finalize a letter, you choose each time whether to use this image or leave space to sign by hand. Replacing it never changes letters already finalized.</p>' +
+    (res.data.has_signature ? '<img class="sig-preview" alt="Your saved signature" src="' + res.data.data_url + '">' : emptyState('No signature uploaded. Letters will leave space for a handwritten signature.')) +
+    '<div class="action-row"><label class="btn btn-secondary btn-sm file-btn">' + (res.data.has_signature ? 'Replace signature' : 'Upload signature') +
+    '<input type="file" id="sig-file" accept="image/png,image/jpeg" hidden></label>' +
+    (res.data.has_signature ? '<button type="button" class="btn-link" id="sig-remove">Remove</button>' : '') + '</div>' +
+    '<p class="field-hint">PNG or JPG, 500 KB or smaller. A signature on white or transparent paper works best.</p>';
+  document.getElementById('sig-file').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 500 * 1024) return toast('Signature images must be 500 KB or smaller.', 'bad');
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const r = await api('admin/signature', { method: 'POST', body: { content_type: f.type, data: String(reader.result).split(',')[1] } });
+      if (r.ok) { toast('Signature saved.'); renderSignaturePanel(); } else toast(r.data.error + (r.data.errors ? ' ' + Object.values(r.data.errors).join(' ') : ''), 'bad');
+    };
+    reader.readAsDataURL(f);
+  });
+  const rm = document.getElementById('sig-remove');
+  if (rm) rm.addEventListener('click', () => openModal({
+    title: 'Remove your signature?', body: '<p>Letters already finalized keep their signature. New letters will leave space to sign by hand.</p>',
+    submitLabel: 'Remove', danger: true,
+    onSubmit: () => api('admin/signature', { method: 'POST', body: { remove: true } }).then((r) => { if (r.ok) { toast('Signature removed.'); renderSignaturePanel(); } return r; })
   }));
 }
 

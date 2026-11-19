@@ -123,6 +123,12 @@ export function createMemoryStorage() {
     },
     async signedUrl(path) {
       return '/__dev-storage/' + encodeURIComponent(path);
+    },
+    async download(path) {
+      return files.has(path) ? files.get(path).buffer : null;
+    },
+    async remove(path) {
+      files.delete(path);
     }
   };
 }

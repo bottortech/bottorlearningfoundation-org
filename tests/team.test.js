@@ -6,7 +6,7 @@ import { setup, login, admin } from './helpers.js';
 const NEW_PERMISSIONS = [
   'donations.view', 'donations.manage', 'donors.view_contact', 'inventory.view', 'inventory.record',
   'inventory.adjust', 'impact.view', 'impact.record', 'impact.goals', 'impact.publish',
-  'acknowledgments.view', 'acknowledgments.manage', 'records.export', 'permissions.manage'
+  'acknowledgments.view', 'acknowledgments.manage', 'acknowledgments.sign', 'records.export', 'permissions.manage'
 ];
 
 test('existing role access is unchanged and new permissions start admin-only', () => {

@@ -22,6 +22,10 @@ import { purgeRecords, retentionOverview } from '../_lib/services/retention.js';
 import { dashboardSummary, listAudit } from '../_lib/services/overview.js';
 import { listTeam, setPermission } from '../_lib/services/team.js';
 import {
+  createAcknowledgment, finalizeAcknowledgment, getAcknowledgment, getSignature, listAcknowledgments,
+  recordSent, saveSignature, updateAcknowledgment, voidAcknowledgment
+} from '../_lib/services/acknowledgments.js';
+import {
   createDonation, createDonor, documentLink, exportDonationsCsv, getDonation, listDonations, listDonors,
   updateDonation, updateDonor, uploadDocument, voidDonation
 } from '../_lib/services/donations.js';
@@ -150,6 +154,26 @@ export const ROUTES = {
   },
   'inventory-distribute': {
     POST: route('inventory.record', (ctx, staff, r) => recordDistribution(ctx, staff, r.body))
+  },
+  acknowledgments: {
+    GET: route('acknowledgments.view', (ctx, staff, r) => r.query.id
+      ? getAcknowledgment(ctx, staff, r.query.id)
+      : listAcknowledgments(ctx, staff, r.query)),
+    POST: route('acknowledgments.manage', (ctx, staff, r) => createAcknowledgment(ctx, staff, r.body)),
+    PATCH: route('acknowledgments.manage', (ctx, staff, r) => updateAcknowledgment(ctx, staff, r.query.id, r.body))
+  },
+  'finalize-acknowledgment': {
+    POST: route('acknowledgments.sign', (ctx, staff, r) => finalizeAcknowledgment(ctx, staff, r.body))
+  },
+  'acknowledgment-sent': {
+    POST: route('acknowledgments.manage', (ctx, staff, r) => recordSent(ctx, staff, r.body))
+  },
+  'void-acknowledgment': {
+    POST: route('acknowledgments.manage', (ctx, staff, r) => voidAcknowledgment(ctx, staff, r.body))
+  },
+  signature: {
+    GET: route('acknowledgments.sign', (ctx, staff) => getSignature(ctx, staff)),
+    POST: route('acknowledgments.sign', (ctx, staff, r) => saveSignature(ctx, staff, r.body), { maxBody: 1024 * 1024 })
   },
   'program-events': {
     GET: route('dashboard.view', (ctx) => listProgramEvents(ctx)),
